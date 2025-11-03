@@ -1,0 +1,90 @@
+<script lang="ts">
+	import '../app.css';
+
+	let { children } = $props();
+</script>
+
+<div class="scanlines"></div>
+
+<div class="layout">
+	<header class="header">
+		<h1 class="glitch" data-text="8004 SEARCH">8004 SEARCH</h1>
+		<p class="tagline">// Discover AI Agents on Ethereum</p>
+	</header>
+
+	<main class="main">
+		{@render children()}
+	</main>
+
+	<footer class="footer">
+		<p>Powered by <a href="https://github.com/agent0lab/agent0-ts" target="_blank" rel="noopener noreferrer">Agent0 SDK</a> • Sepolia Testnet</p>
+		<p class="credits">Built by <a href="https://github.com/matteoscurati" target="_blank" rel="noopener noreferrer">Matteo Scurati</a></p>
+	</footer>
+</div>
+
+<style>
+	.layout {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		padding: calc(var(--spacing-unit) * 2);
+		max-width: 1400px;
+		margin: 0 auto;
+	}
+
+	.header {
+		text-align: center;
+		margin-bottom: calc(var(--spacing-unit) * 4);
+		padding: calc(var(--spacing-unit) * 3) 0;
+		border-bottom: 3px solid var(--color-border);
+	}
+
+	.header h1 {
+		font-size: 32px;
+		margin-bottom: calc(var(--spacing-unit) * 2);
+		text-shadow: 4px 4px 0 var(--color-shadow);
+	}
+
+	.tagline {
+		font-size: 10px;
+		color: var(--color-text-secondary);
+	}
+
+	.main {
+		flex: 1;
+	}
+
+	.footer {
+		text-align: center;
+		padding: calc(var(--spacing-unit) * 3) 0;
+		margin-top: calc(var(--spacing-unit) * 4);
+		border-top: 3px solid var(--color-border);
+		font-size: 8px;
+		color: var(--color-text-secondary);
+	}
+
+	.footer p {
+		margin: calc(var(--spacing-unit) / 2) 0;
+	}
+
+	.footer a {
+		color: var(--color-primary);
+		text-decoration: none;
+		transition: all 0.2s;
+	}
+
+	.footer a:hover {
+		color: var(--color-text);
+		text-shadow: 0 0 10px var(--color-primary);
+	}
+
+	@media (max-width: 768px) {
+		.header h1 {
+			font-size: 20px;
+		}
+
+		.layout {
+			padding: var(--spacing-unit);
+		}
+	}
+</style>
