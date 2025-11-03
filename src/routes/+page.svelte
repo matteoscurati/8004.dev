@@ -5,6 +5,7 @@
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
+	import { parseFiltersFromURL, filtersToURLString } from '$lib/utils/url-params';
 
 	let agents = $state<AgentResult[]>([]);
 	let loading = $state(false);
@@ -17,40 +18,9 @@
 	let currentFilters = $state<Filters>({});
 	const pageSize = 20;
 
-	// Parse filters from URL parameters
-	function parseFiltersFromURL(searchParams: URLSearchParams): Filters {
-		const filters: Filters = {};
-
-		const name = searchParams.get('name');
-		if (name) filters.name = name;
-
-		const mcpTools = searchParams.get('mcpTools');
-		if (mcpTools) filters.mcpTools = mcpTools.split(',').map(t => t.trim()).filter(Boolean);
-
-		const a2aSkills = searchParams.get('a2aSkills');
-		if (a2aSkills) filters.a2aSkills = a2aSkills.split(',').map(s => s.trim()).filter(Boolean);
-
-		if (searchParams.get('active') === 'true') filters.active = true;
-		if (searchParams.get('x402') === 'true') filters.x402support = true;
-
-		return filters;
-	}
-
 	// Update URL with current filters
 	function updateURL(filters: Filters) {
-		const params = new URLSearchParams();
-
-		if (filters.name) params.set('name', filters.name);
-		if (filters.mcpTools && filters.mcpTools.length > 0) {
-			params.set('mcpTools', filters.mcpTools.join(','));
-		}
-		if (filters.a2aSkills && filters.a2aSkills.length > 0) {
-			params.set('a2aSkills', filters.a2aSkills.join(','));
-		}
-		if (filters.active) params.set('active', 'true');
-		if (filters.x402support) params.set('x402', 'true');
-
-		const newURL = params.toString() ? `?${params.toString()}` : '/';
+		const newURL = filtersToURLString(filters);
 		goto(newURL, { replaceState: true, noScroll: true, keepFocus: true });
 	}
 
