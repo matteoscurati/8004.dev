@@ -9,7 +9,7 @@
 <div class="layout">
 	<header class="header">
 		<h1 class="glitch" data-text="8004 SEARCH">8004 SEARCH</h1>
-		<p class="tagline">// Discover AI Agents on Ethereum</p>
+		<p class="tagline">// Discover AI Agents on Ethereum • Currently on Sepolia Testnet</p>
 	</header>
 
 	<main class="main">

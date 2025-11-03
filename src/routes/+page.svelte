@@ -78,13 +78,6 @@
 </script>
 
 <div class="search-page">
-	<div class="network-info pixel-card">
-		<span class="network-badge">
-			<span class="network-icon">🌐</span>
-			<span class="network-text">Currently on <strong>Sepolia Testnet</strong></span>
-		</span>
-	</div>
-
 	<SearchFilters onSearch={handleSearch} />
 
 	{#if loading}
@@ -165,31 +158,6 @@
 <style>
 	.search-page {
 		width: 100%;
-	}
-
-	.network-info {
-		margin-bottom: calc(var(--spacing-unit) * 2);
-		padding: calc(var(--spacing-unit) * 1.5);
-		background-color: rgba(0, 255, 255, 0.05);
-		border-color: var(--color-primary);
-	}
-
-	.network-badge {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-unit);
-		font-size: 10px;
-		color: var(--color-text-secondary);
-		justify-content: center;
-	}
-
-	.network-icon {
-		font-size: 14px;
-	}
-
-	.network-text strong {
-		color: var(--color-primary);
-		font-weight: bold;
 	}
 
 	.loading-container {
