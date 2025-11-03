@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { SearchFilters } from '$lib/sdk';
 
 	interface Props {
 		onSearch: (filters: SearchFilters) => void;
+		initialFilters?: SearchFilters;
 	}
 
-	let { onSearch }: Props = $props();
+	let { onSearch, initialFilters = {} }: Props = $props();
 
 	let name = $state('');
 	let mcpToolsInput = $state('');
@@ -13,6 +15,25 @@
 	let activeOnly = $state(false);
 	let x402Only = $state(false);
 	let filtersExpanded = $state(false);
+
+	// Initialize filters from URL parameters
+	onMount(() => {
+		if (initialFilters.name) name = initialFilters.name;
+		if (initialFilters.mcpTools) mcpToolsInput = initialFilters.mcpTools.join(', ');
+		if (initialFilters.a2aSkills) a2aSkillsInput = initialFilters.a2aSkills.join(', ');
+		if (initialFilters.active) activeOnly = true;
+		if (initialFilters.x402support) x402Only = true;
+
+		// Expand filters section if any filter is active
+		if (
+			initialFilters.mcpTools?.length ||
+			initialFilters.a2aSkills?.length ||
+			initialFilters.active ||
+			initialFilters.x402support
+		) {
+			filtersExpanded = true;
+		}
+	});
 
 	function buildFilters(): SearchFilters {
 		const filters: SearchFilters = {};
