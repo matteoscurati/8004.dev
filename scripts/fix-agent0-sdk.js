@@ -21,10 +21,9 @@ console.log('🔧 Fixing agent0-sdk ES module imports...\n');
 function fixImportsInFile(filePath) {
     try {
         let content = readFileSync(filePath, 'utf8');
-        let modified = false;
+        const originalContent = content;
 
-        // Fix: export * from './path' -> export * from './path.js' (if path is a file)
-        // Fix: export * from './path' -> export * from './path/index.js' (if path is a dir)
+        // Fix: export * from './path' -> export * from './path/index.js' or './path.js'
         content = content.replace(
             /from ['"](\.[^'"]+)['"]/g,
             (match, importPath) => {
@@ -33,25 +32,71 @@ function fixImportsInFile(filePath) {
                     return match;
                 }
 
-                // Add .js extension
-                modified = true;
-                return `from '${importPath}.js'`;
+                // Resolve the full path relative to the current file
+                const currentDir = dirname(filePath);
+                const absolutePath = join(currentDir, importPath);
+
+                // Check if it's a directory or file
+                try {
+                    const stat = statSync(absolutePath);
+                    if (stat.isDirectory()) {
+                        // It's a directory, add /index.js
+                        return `from '${importPath}/index.js'`;
+                    }
+                } catch (e) {
+                    // Path doesn't exist as-is, try with .js
+                }
+
+                // Check if .js file exists
+                try {
+                    statSync(absolutePath + '.js');
+                    return `from '${importPath}.js'`;
+                } catch (e) {
+                    // Fallback: try /index.js
+                    try {
+                        statSync(join(absolutePath, 'index.js'));
+                        return `from '${importPath}/index.js'`;
+                    } catch (e2) {
+                        // Default to .js if we can't determine
+                        return `from '${importPath}.js'`;
+                    }
+                }
             }
         );
 
-        // Fix: import('./path') -> import('./path.js')
+        // Fix: import('./path') -> import('./path.js') or import('./path/index.js')
         content = content.replace(
             /import\(['"](\.[^'"]+)['"]\)/g,
             (match, importPath) => {
                 if (importPath.endsWith('.js')) {
                     return match;
                 }
-                modified = true;
-                return `import('${importPath}.js')`;
+
+                const currentDir = dirname(filePath);
+                const absolutePath = join(currentDir, importPath);
+
+                try {
+                    const stat = statSync(absolutePath);
+                    if (stat.isDirectory()) {
+                        return `import('${importPath}/index.js')`;
+                    }
+                } catch (e) {}
+
+                try {
+                    statSync(absolutePath + '.js');
+                    return `import('${importPath}.js')`;
+                } catch (e) {
+                    try {
+                        statSync(join(absolutePath, 'index.js'));
+                        return `import('${importPath}/index.js')`;
+                    } catch (e2) {
+                        return `import('${importPath}.js')`;
+                    }
+                }
             }
         );
 
-        if (modified) {
+        if (content !== originalContent) {
             writeFileSync(filePath, content, 'utf8');
             return true;
         }
