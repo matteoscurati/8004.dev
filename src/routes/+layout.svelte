@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import MusicPlayer from '$lib/components/MusicPlayer.svelte';
 
 	let { children } = $props();
 </script>
@@ -21,6 +22,9 @@
 		<p class="credits">Built by <a href="https://github.com/matteoscurati" target="_blank" rel="noopener noreferrer">Matteo Scurati</a></p>
 	</footer>
 </div>
+
+<!-- Floating 8-bit Music Player -->
+<MusicPlayer />
 
 <style>
 	.layout {
