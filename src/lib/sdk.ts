@@ -91,14 +91,28 @@ export interface SearchResult {
 export async function countAgents(filters: SearchFilters): Promise<number> {
     const sdk = getSDK();
 
+    // IMPORTANT: Name filter must be handled client-side because:
+    // - The subgraph doesn't support name filtering at query level
+    // - SDK applies name filter client-side but only on pageSize results
+    // - This means agents not in first page won't be found
+    const sdkFilters = { ...filters };
+    const nameFilter = filters.name?.toLowerCase();
+    delete sdkFilters.name;
+
     let count = 0;
     let cursor: string | undefined = undefined;
     const pageSize = 100; // Larger pages for faster counting
 
     // Fetch all pages to count total
     while (true) {
-        const result = await sdk.searchAgents(filters, undefined, pageSize, cursor);
-        count += result.items.length;
+        const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+
+        // Apply name filter client-side
+        const filteredItems = nameFilter
+            ? result.items.filter((agent: any) => agent.name?.toLowerCase().includes(nameFilter))
+            : result.items;
+
+        count += filteredItems.length;
 
         if (!result.nextCursor) break;
         cursor = result.nextCursor;
@@ -114,35 +128,71 @@ export async function searchAgents(
 ): Promise<SearchResult> {
     const sdk = getSDK();
 
-    // Pass all filters directly to SDK (including name filter)
-    const result = await sdk.searchAgents(filters, undefined, pageSize, cursor);
+    // IMPORTANT: Name filter requires special handling because:
+    // - The subgraph doesn't support name filtering at GraphQL query level
+    // - SDK applies name filter client-side but only on pageSize results
+    // - This means agents not in first page won't be found (e.g., "Agente Ciro" at ID 770)
+    // Solution: Fetch multiple pages and filter client-side, then return all results without pagination
+    const nameFilter = filters.name?.toLowerCase();
+    const sdkFilters = { ...filters };
+    delete sdkFilters.name;
 
-    // Map SDK response to our AgentResult interface
-    const items = result.items.map((agent: any) => ({
+    // Helper function to map SDK agent to our AgentResult interface
+    const mapAgent = (agent: any): AgentResult => ({
         id: agent.agentId,
         name: agent.name,
         description: agent.description,
         imageUrl: agent.image,
-        // Capabilities
         mcp: agent.mcp,
         a2a: agent.a2a,
         mcpTools: agent.mcpTools,
         a2aSkills: agent.a2aSkills,
         mcpPrompts: agent.mcpPrompts,
         mcpResources: agent.mcpResources,
-        // Status
         active: agent.active,
         x402support: agent.x402support,
-        // Trust & Governance
         supportedTrusts: agent.supportedTrusts,
         owners: agent.owners,
         operators: agent.operators,
-        // Blockchain
         chainId: agent.chainId,
         walletAddress: agent.walletAddress,
-        // Metadata
         extras: agent.extras
-    }));
+    });
+
+    // If searching by name, fetch multiple pages to ensure we find all matches
+    if (nameFilter && !cursor) {
+        let allItems: AgentResult[] = [];
+        let nextCursor: string | undefined = undefined;
+        let pagesFetched = 0;
+        const maxPages = 10; // Fetch up to 10 pages (500 agents) for name search
+
+        while (pagesFetched < maxPages) {
+            const result = await sdk.searchAgents(sdkFilters, undefined, 50, nextCursor);
+            const mappedItems = result.items.map(mapAgent);
+
+            // Filter by name client-side
+            const filtered = mappedItems.filter(agent =>
+                agent.name?.toLowerCase().includes(nameFilter)
+            );
+
+            allItems.push(...filtered);
+            nextCursor = result.nextCursor;
+            pagesFetched++;
+
+            if (!nextCursor) break;
+        }
+
+        // Return all results without pagination for name searches
+        return {
+            items: allItems,
+            nextCursor: undefined,
+            totalMatches: allItems.length
+        };
+    }
+
+    // Normal flow without name filtering - standard pagination
+    const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+    const items = result.items.map(mapAgent);
 
     return {
         items,
