@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import StatsOverview from '$lib/components/StatsOverview.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
@@ -166,6 +167,8 @@
 </svelte:head>
 
 <div class="search-page">
+	<StatsOverview />
+
 	<SearchFilters onSearch={handleSearch} {initialFilters} />
 
 	{#if loading}
