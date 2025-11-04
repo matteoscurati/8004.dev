@@ -100,71 +100,85 @@
 
 <svelte:head>
 	<!-- Primary Meta Tags -->
-	<title>{data.title}</title>
-	<meta name="title" content={data.title} />
-	<meta name="description" content={data.description} />
-	<meta name="keywords" content={data.keywords} />
+	<title>{data?.title || '8004.dev - ERC-8004 Agent Discovery'}</title>
+	<meta name="title" content={data?.title || '8004.dev - ERC-8004 Agent Discovery'} />
+	<meta name="description" content={data?.description || 'Discover AI agents on Ethereum'} />
+	{#if data?.keywords}
+		<meta name="keywords" content={data.keywords} />
+	{/if}
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content={data.url} />
-	<meta property="og:title" content={data.title} />
-	<meta property="og:description" content={data.description} />
-	<meta property="og:image" content={data.image} />
+	{#if data?.url}
+		<meta property="og:url" content={data.url} />
+	{/if}
+	<meta property="og:title" content={data?.title || '8004.dev'} />
+	<meta property="og:description" content={data?.description || 'Discover AI agents on Ethereum'} />
+	{#if data?.image}
+		<meta property="og:image" content={data.image} />
+	{/if}
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:url" content={data.url} />
-	<meta property="twitter:title" content={data.title} />
-	<meta property="twitter:description" content={data.description} />
-	<meta property="twitter:image" content={data.image} />
+	{#if data?.url}
+		<meta property="twitter:url" content={data.url} />
+	{/if}
+	<meta property="twitter:title" content={data?.title || '8004.dev'} />
+	<meta property="twitter:description" content={data?.description || 'Discover AI agents on Ethereum'} />
+	{#if data?.image}
+		<meta property="twitter:image" content={data.image} />
+	{/if}
 
 	<!-- Additional SEO -->
 	<meta name="robots" content="index, follow" />
 	<meta name="language" content="English" />
 	<meta name="author" content="Matteo Scurati" />
-	<link rel="canonical" href={data.url} />
+	{#if data?.url}
+		<link rel="canonical" href={data.url} />
+	{/if}
 
 	<!-- Structured Data (JSON-LD) -->
-	{@html `<script type="application/ld+json">
-	{
-		"@context": "https://schema.org",
-		"@type": "WebApplication",
-		"name": "8004.dev",
-		"url": "${data.url}",
-		"description": "${data.description}",
-		"applicationCategory": "DeveloperApplication",
-		"operatingSystem": "Web",
-		"offers": {
-			"@type": "Offer",
-			"price": "0",
-			"priceCurrency": "USD"
-		},
-		"author": {
-			"@type": "Person",
-			"name": "Matteo Scurati",
-			"url": "https://github.com/matteoscurati"
-		},
-		"provider": {
-			"@type": "Organization",
+	{#if data?.url && data?.description && data?.keywords}
+		{@html `<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebApplication",
 			"name": "8004.dev",
-			"url": "${data.url}"
-		},
-		"keywords": "${data.keywords}",
-		"browserRequirements": "Requires JavaScript. Requires HTML5.",
-		"softwareVersion": "1.0.0",
-		"aggregateRating": {
-			"@type": "AggregateRating",
-			"ratingValue": "5.0",
-			"ratingCount": "1"
-		},
-		"potentialAction": {
-			"@type": "SearchAction",
-			"target": "${data.url}?name={search_term_string}",
-			"query-input": "required name=search_term_string"
+			"url": "${data.url}",
+			"description": "${data.description}",
+			"applicationCategory": "DeveloperApplication",
+			"operatingSystem": "Web",
+			"offers": {
+				"@type": "Offer",
+				"price": "0",
+				"priceCurrency": "USD"
+			},
+			"author": {
+				"@type": "Person",
+				"name": "Matteo Scurati",
+				"url": "https://github.com/matteoscurati"
+			},
+			"provider": {
+				"@type": "Organization",
+				"name": "8004.dev",
+				"url": "${data.url}"
+			},
+			"keywords": "${data.keywords}",
+			"browserRequirements": "Requires JavaScript. Requires HTML5.",
+			"softwareVersion": "1.0.0",
+			"aggregateRating": {
+				"@type": "AggregateRating",
+				"ratingValue": "5.0",
+				"ratingCount": "1"
+			},
+			"potentialAction": {
+				"@type": "SearchAction",
+				"target": "${data.url}?name={search_term_string}",
+				"query-input": "required name=search_term_string"
+			}
 		}
-	}
-	<\/script>`}
+		<\/script>`}
+	{/if}
 </svelte:head>
 
 <div class="search-page">

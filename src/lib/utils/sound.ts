@@ -25,9 +25,18 @@ export class SoundPlayer {
 	private initAudio(): void {
 		if (!this.audioContext && typeof window !== 'undefined') {
 			try {
-				this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+				// Check if AudioContext is available (blocked in Safari Lockdown Mode)
+				const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+				if (!AudioContextClass) {
+					// AudioContext not available, disable sound silently
+					this.enabled = false;
+					return;
+				}
+				this.audioContext = new AudioContextClass();
 			} catch (error) {
+				// Failed to create AudioContext, disable sound silently
 				console.error('SoundPlayer: Failed to create AudioContext:', error);
+				this.enabled = false;
 			}
 		}
 	}
