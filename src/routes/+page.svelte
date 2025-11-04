@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import StatsOverview from '$lib/components/StatsOverview.svelte';
+	import ActivityFeed from '$lib/components/ActivityFeed.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
@@ -168,6 +169,8 @@
 
 <div class="search-page">
 	<StatsOverview />
+
+	<ActivityFeed />
 
 	<SearchFilters onSearch={handleSearch} {initialFilters} />
 
