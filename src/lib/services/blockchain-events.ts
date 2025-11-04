@@ -185,7 +185,7 @@ export class ERC8004EventListener implements BlockchainEventListener {
 
 				for (const event of registeredEvents) {
 					if (event instanceof ethers.EventLog) {
-						const [agentId, tokenURI, owner] = event.args as [bigint, string, string];
+						const [agentId, tokenURI, owner] = event.args as unknown as [bigint, string, string];
 						const block = await event.getBlock();
 						const agentName = await this.getAgentName(agentId.toString());
 
@@ -212,7 +212,7 @@ export class ERC8004EventListener implements BlockchainEventListener {
 
 				for (const event of metadataEvents) {
 					if (event instanceof ethers.EventLog) {
-						const [agentId, indexedKey, key, value] = event.args as [bigint, string, string, string];
+						const [agentId, indexedKey, key, value] = event.args as unknown as [bigint, string, string, string];
 						const block = await event.getBlock();
 						const agentName = await this.getAgentName(agentId.toString());
 
