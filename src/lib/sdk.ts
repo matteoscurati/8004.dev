@@ -91,13 +91,56 @@ export interface SearchResult {
 export async function countAgents(filters: SearchFilters): Promise<number> {
     const sdk = getSDK();
 
-    // IMPORTANT: Name filter must be handled client-side because:
-    // - The subgraph doesn't support name filtering at query level
-    // - SDK applies name filter client-side but only on pageSize results
-    // - This means agents not in first page won't be found
-    const sdkFilters = { ...filters };
+    // IMPORTANT: Array filters and name filter must be handled client-side:
+    // - Subgraph doesn't support name filtering at query level
+    // - SDK uses exact matching for arrays (e.g., "crypto" won't match "crypto-economic")
+    // - SDK applies filters client-side but only on pageSize results
     const nameFilter = filters.name?.toLowerCase();
+    const mcpToolsFilter = filters.mcpTools?.map(t => t.toLowerCase());
+    const a2aSkillsFilter = filters.a2aSkills?.map(s => s.toLowerCase());
+    const supportedTrustFilter = filters.supportedTrust?.map(t => t.toLowerCase());
+
+    const sdkFilters = { ...filters };
     delete sdkFilters.name;
+    delete sdkFilters.mcpTools;
+    delete sdkFilters.a2aSkills;
+    delete sdkFilters.supportedTrust;
+
+    // Helper function to check if agent matches client-side filters
+    const matchesFilters = (agent: any): boolean => {
+        if (nameFilter && !agent.name?.toLowerCase().includes(nameFilter)) {
+            return false;
+        }
+
+        if (mcpToolsFilter && mcpToolsFilter.length > 0) {
+            const hasAllTools = mcpToolsFilter.every(searchTool =>
+                agent.mcpTools?.some((agentTool: string) =>
+                    agentTool.toLowerCase().includes(searchTool)
+                )
+            );
+            if (!hasAllTools) return false;
+        }
+
+        if (a2aSkillsFilter && a2aSkillsFilter.length > 0) {
+            const hasAllSkills = a2aSkillsFilter.every(searchSkill =>
+                agent.a2aSkills?.some((agentSkill: string) =>
+                    agentSkill.toLowerCase().includes(searchSkill)
+                )
+            );
+            if (!hasAllSkills) return false;
+        }
+
+        if (supportedTrustFilter && supportedTrustFilter.length > 0) {
+            const hasAllTrusts = supportedTrustFilter.every(searchTrust =>
+                agent.supportedTrusts?.some((agentTrust: string) =>
+                    agentTrust.toLowerCase().includes(searchTrust)
+                )
+            );
+            if (!hasAllTrusts) return false;
+        }
+
+        return true;
+    };
 
     let count = 0;
     let cursor: string | undefined = undefined;
@@ -107,11 +150,8 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
     while (true) {
         const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
 
-        // Apply name filter client-side
-        const filteredItems = nameFilter
-            ? result.items.filter((agent: any) => agent.name?.toLowerCase().includes(nameFilter))
-            : result.items;
-
+        // Apply client-side filters with partial matching
+        const filteredItems = result.items.filter(matchesFilters);
         count += filteredItems.length;
 
         if (!result.nextCursor) break;
@@ -128,14 +168,21 @@ export async function searchAgents(
 ): Promise<SearchResult> {
     const sdk = getSDK();
 
-    // IMPORTANT: Name filter requires special handling because:
+    // IMPORTANT: Array filters (mcpTools, a2aSkills, supportedTrust) and name filter require special handling:
     // - The subgraph doesn't support name filtering at GraphQL query level
-    // - SDK applies name filter client-side but only on pageSize results
-    // - This means agents not in first page won't be found (e.g., "Agente Ciro" at ID 770)
-    // Solution: Fetch multiple pages and filter client-side, then return all results without pagination
+    // - SDK applies exact matching for array filters (e.g., "crypto" won't match "crypto-economic")
+    // - SDK applies filters client-side but only on pageSize results
+    // Solution: Extract these filters, fetch multiple pages, apply partial matching client-side
     const nameFilter = filters.name?.toLowerCase();
+    const mcpToolsFilter = filters.mcpTools?.map(t => t.toLowerCase());
+    const a2aSkillsFilter = filters.a2aSkills?.map(s => s.toLowerCase());
+    const supportedTrustFilter = filters.supportedTrust?.map(t => t.toLowerCase());
+
     const sdkFilters = { ...filters };
     delete sdkFilters.name;
+    delete sdkFilters.mcpTools;
+    delete sdkFilters.a2aSkills;
+    delete sdkFilters.supportedTrust;
 
     // Helper function to map SDK agent to our AgentResult interface
     const mapAgent = (agent: any): AgentResult => ({
@@ -159,21 +206,67 @@ export async function searchAgents(
         extras: agent.extras
     });
 
-    // If searching by name, fetch multiple pages to ensure we find all matches
-    if (nameFilter && !cursor) {
+    // Helper function to apply client-side filters with partial matching
+    const matchesFilters = (agent: AgentResult): boolean => {
+        // Name filter (case-insensitive substring match)
+        if (nameFilter && !agent.name?.toLowerCase().includes(nameFilter)) {
+            return false;
+        }
+
+        // MCP Tools filter (partial match - e.g., "git" matches "github")
+        if (mcpToolsFilter && mcpToolsFilter.length > 0) {
+            const hasAllTools = mcpToolsFilter.every(searchTool =>
+                agent.mcpTools?.some(agentTool =>
+                    agentTool.toLowerCase().includes(searchTool)
+                )
+            );
+            if (!hasAllTools) return false;
+        }
+
+        // A2A Skills filter (partial match)
+        if (a2aSkillsFilter && a2aSkillsFilter.length > 0) {
+            const hasAllSkills = a2aSkillsFilter.every(searchSkill =>
+                agent.a2aSkills?.some(agentSkill =>
+                    agentSkill.toLowerCase().includes(searchSkill)
+                )
+            );
+            if (!hasAllSkills) return false;
+        }
+
+        // Supported Trust filter (partial match - e.g., "crypto" matches "crypto-economic")
+        if (supportedTrustFilter && supportedTrustFilter.length > 0) {
+            const hasAllTrusts = supportedTrustFilter.every(searchTrust =>
+                agent.supportedTrusts?.some(agentTrust =>
+                    agentTrust.toLowerCase().includes(searchTrust)
+                )
+            );
+            if (!hasAllTrusts) return false;
+        }
+
+        return true;
+    };
+
+    // Determine if we need to fetch multiple pages for client-side filtering
+    const needsMultiPageFetch = !cursor && (
+        nameFilter ||
+        (mcpToolsFilter && mcpToolsFilter.length > 0) ||
+        (a2aSkillsFilter && a2aSkillsFilter.length > 0) ||
+        (supportedTrustFilter && supportedTrustFilter.length > 0)
+    );
+
+    // If we have filters requiring client-side partial matching, fetch multiple pages
+    if (needsMultiPageFetch) {
         let allItems: AgentResult[] = [];
         let nextCursor: string | undefined = undefined;
         let pagesFetched = 0;
-        const maxPages = 10; // Fetch up to 10 pages (500 agents) for name search
+        const maxPages = 10; // Fetch up to 10 pages (500 agents)
 
         while (pagesFetched < maxPages) {
             const result = await sdk.searchAgents(sdkFilters, undefined, 50, nextCursor);
             const mappedItems = result.items.map(mapAgent);
 
-            // Filter by name client-side
-            const filtered = mappedItems.filter(agent =>
-                agent.name?.toLowerCase().includes(nameFilter)
-            );
+            // Apply all client-side filters with partial matching
+            const filtered = mappedItems.filter(matchesFilters);
 
             allItems.push(...filtered);
             nextCursor = result.nextCursor;
@@ -182,7 +275,7 @@ export async function searchAgents(
             if (!nextCursor) break;
         }
 
-        // Return all results without pagination for name searches
+        // Return all results without pagination
         return {
             items: allItems,
             nextCursor: undefined,
@@ -190,7 +283,7 @@ export async function searchAgents(
         };
     }
 
-    // Normal flow without name filtering - standard pagination
+    // Normal flow without client-side filters - standard pagination
     const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
     const items = result.items.map(mapAgent);
 
