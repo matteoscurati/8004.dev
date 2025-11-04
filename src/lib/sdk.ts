@@ -7,6 +7,7 @@ import {
     PUBLIC_IPFS_NODE_URL,
     PUBLIC_PINATA_JWT
 } from '$env/static/public';
+import { matchesAllFilters, hasClientSideFilters } from '$lib/utils/filters';
 
 let sdkInstance: SDK | null = null;
 
@@ -95,10 +96,12 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
     // - Subgraph doesn't support name filtering at query level
     // - SDK uses exact matching for arrays (e.g., "crypto" won't match "crypto-economic")
     // - SDK applies filters client-side but only on pageSize results
-    const nameFilter = filters.name?.toLowerCase();
-    const mcpToolsFilter = filters.mcpTools?.map(t => t.toLowerCase());
-    const a2aSkillsFilter = filters.a2aSkills?.map(s => s.toLowerCase());
-    const supportedTrustFilter = filters.supportedTrust?.map(t => t.toLowerCase());
+    const clientFilters = {
+        name: filters.name,
+        mcpTools: filters.mcpTools,
+        a2aSkills: filters.a2aSkills,
+        supportedTrust: filters.supportedTrust
+    };
 
     const sdkFilters = { ...filters };
     delete sdkFilters.name;
@@ -106,41 +109,27 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
     delete sdkFilters.a2aSkills;
     delete sdkFilters.supportedTrust;
 
-    // Helper function to check if agent matches client-side filters
-    const matchesFilters = (agent: any): boolean => {
-        if (nameFilter && !agent.name?.toLowerCase().includes(nameFilter)) {
-            return false;
-        }
-
-        if (mcpToolsFilter && mcpToolsFilter.length > 0) {
-            const hasAllTools = mcpToolsFilter.every(searchTool =>
-                agent.mcpTools?.some((agentTool: string) =>
-                    agentTool.toLowerCase().includes(searchTool)
-                )
-            );
-            if (!hasAllTools) return false;
-        }
-
-        if (a2aSkillsFilter && a2aSkillsFilter.length > 0) {
-            const hasAllSkills = a2aSkillsFilter.every(searchSkill =>
-                agent.a2aSkills?.some((agentSkill: string) =>
-                    agentSkill.toLowerCase().includes(searchSkill)
-                )
-            );
-            if (!hasAllSkills) return false;
-        }
-
-        if (supportedTrustFilter && supportedTrustFilter.length > 0) {
-            const hasAllTrusts = supportedTrustFilter.every(searchTrust =>
-                agent.supportedTrusts?.some((agentTrust: string) =>
-                    agentTrust.toLowerCase().includes(searchTrust)
-                )
-            );
-            if (!hasAllTrusts) return false;
-        }
-
-        return true;
-    };
+    // Helper to map SDK agent format to our AgentResult
+    const mapAgent = (agent: any): AgentResult => ({
+        id: agent.agentId,
+        name: agent.name,
+        description: agent.description,
+        imageUrl: agent.image,
+        mcp: agent.mcp,
+        a2a: agent.a2a,
+        mcpTools: agent.mcpTools,
+        a2aSkills: agent.a2aSkills,
+        mcpPrompts: agent.mcpPrompts,
+        mcpResources: agent.mcpResources,
+        active: agent.active,
+        x402support: agent.x402support,
+        supportedTrusts: agent.supportedTrusts,
+        owners: agent.owners,
+        operators: agent.operators,
+        chainId: agent.chainId,
+        walletAddress: agent.walletAddress,
+        extras: agent.extras
+    });
 
     let count = 0;
     let cursor: string | undefined = undefined;
@@ -151,7 +140,9 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
         const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
 
         // Apply client-side filters with partial matching
-        const filteredItems = result.items.filter(matchesFilters);
+        const filteredItems = result.items
+            .map(mapAgent)
+            .filter((agent) => matchesAllFilters(agent, clientFilters));
         count += filteredItems.length;
 
         if (!result.nextCursor) break;
@@ -173,10 +164,12 @@ export async function searchAgents(
     // - SDK applies exact matching for array filters (e.g., "crypto" won't match "crypto-economic")
     // - SDK applies filters client-side but only on pageSize results
     // Solution: Extract these filters, fetch multiple pages, apply partial matching client-side
-    const nameFilter = filters.name?.toLowerCase();
-    const mcpToolsFilter = filters.mcpTools?.map(t => t.toLowerCase());
-    const a2aSkillsFilter = filters.a2aSkills?.map(s => s.toLowerCase());
-    const supportedTrustFilter = filters.supportedTrust?.map(t => t.toLowerCase());
+    const clientFilters = {
+        name: filters.name,
+        mcpTools: filters.mcpTools,
+        a2aSkills: filters.a2aSkills,
+        supportedTrust: filters.supportedTrust
+    };
 
     const sdkFilters = { ...filters };
     delete sdkFilters.name;
@@ -206,53 +199,8 @@ export async function searchAgents(
         extras: agent.extras
     });
 
-    // Helper function to apply client-side filters with partial matching
-    const matchesFilters = (agent: AgentResult): boolean => {
-        // Name filter (case-insensitive substring match)
-        if (nameFilter && !agent.name?.toLowerCase().includes(nameFilter)) {
-            return false;
-        }
-
-        // MCP Tools filter (partial match - e.g., "git" matches "github")
-        if (mcpToolsFilter && mcpToolsFilter.length > 0) {
-            const hasAllTools = mcpToolsFilter.every(searchTool =>
-                agent.mcpTools?.some(agentTool =>
-                    agentTool.toLowerCase().includes(searchTool)
-                )
-            );
-            if (!hasAllTools) return false;
-        }
-
-        // A2A Skills filter (partial match)
-        if (a2aSkillsFilter && a2aSkillsFilter.length > 0) {
-            const hasAllSkills = a2aSkillsFilter.every(searchSkill =>
-                agent.a2aSkills?.some(agentSkill =>
-                    agentSkill.toLowerCase().includes(searchSkill)
-                )
-            );
-            if (!hasAllSkills) return false;
-        }
-
-        // Supported Trust filter (partial match - e.g., "crypto" matches "crypto-economic")
-        if (supportedTrustFilter && supportedTrustFilter.length > 0) {
-            const hasAllTrusts = supportedTrustFilter.every(searchTrust =>
-                agent.supportedTrusts?.some(agentTrust =>
-                    agentTrust.toLowerCase().includes(searchTrust)
-                )
-            );
-            if (!hasAllTrusts) return false;
-        }
-
-        return true;
-    };
-
     // Determine if we need to fetch multiple pages for client-side filtering
-    const needsMultiPageFetch = !cursor && (
-        nameFilter ||
-        (mcpToolsFilter && mcpToolsFilter.length > 0) ||
-        (a2aSkillsFilter && a2aSkillsFilter.length > 0) ||
-        (supportedTrustFilter && supportedTrustFilter.length > 0)
-    );
+    const needsMultiPageFetch = !cursor && hasClientSideFilters(clientFilters);
 
     // If we have filters requiring client-side partial matching, fetch multiple pages
     if (needsMultiPageFetch) {
@@ -266,7 +214,9 @@ export async function searchAgents(
             const mappedItems = result.items.map(mapAgent);
 
             // Apply all client-side filters with partial matching
-            const filtered = mappedItems.filter(matchesFilters);
+            const filtered = mappedItems.filter((agent) =>
+                matchesAllFilters(agent, clientFilters)
+            );
 
             allItems.push(...filtered);
             nextCursor = result.nextCursor;
