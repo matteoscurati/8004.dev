@@ -1,3 +1,8 @@
-# allow crawling everything by default
+# 8004.dev - AI Agent Discovery Platform
+# Allow all search engines to crawl all content
+
 User-agent: *
 Disallow:
+
+# Sitemap location
+Sitemap: https://8004.dev/sitemap.xml

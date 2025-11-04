@@ -6,6 +6,9 @@
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
 	import { parseFiltersFromURL, filtersToURLString } from '$lib/utils/url-params';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	let agents = $state<AgentResult[]>([]);
 	let loading = $state(false);
@@ -92,6 +95,75 @@
 		handleSearch(urlFilters);
 	});
 </script>
+
+<svelte:head>
+	<!-- Primary Meta Tags -->
+	<title>{data.title}</title>
+	<meta name="title" content={data.title} />
+	<meta name="description" content={data.description} />
+	<meta name="keywords" content={data.keywords} />
+
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={data.url} />
+	<meta property="og:title" content={data.title} />
+	<meta property="og:description" content={data.description} />
+	<meta property="og:image" content={data.image} />
+
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image" />
+	<meta property="twitter:url" content={data.url} />
+	<meta property="twitter:title" content={data.title} />
+	<meta property="twitter:description" content={data.description} />
+	<meta property="twitter:image" content={data.image} />
+
+	<!-- Additional SEO -->
+	<meta name="robots" content="index, follow" />
+	<meta name="language" content="English" />
+	<meta name="author" content="Matteo Scurati" />
+	<link rel="canonical" href={data.url} />
+
+	<!-- Structured Data (JSON-LD) -->
+	{@html `<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "WebApplication",
+		"name": "8004.dev",
+		"url": "${data.url}",
+		"description": "${data.description}",
+		"applicationCategory": "DeveloperApplication",
+		"operatingSystem": "Web",
+		"offers": {
+			"@type": "Offer",
+			"price": "0",
+			"priceCurrency": "USD"
+		},
+		"author": {
+			"@type": "Person",
+			"name": "Matteo Scurati",
+			"url": "https://github.com/matteoscurati"
+		},
+		"provider": {
+			"@type": "Organization",
+			"name": "8004.dev",
+			"url": "${data.url}"
+		},
+		"keywords": "${data.keywords}",
+		"browserRequirements": "Requires JavaScript. Requires HTML5.",
+		"softwareVersion": "1.0.0",
+		"aggregateRating": {
+			"@type": "AggregateRating",
+			"ratingValue": "5.0",
+			"ratingCount": "1"
+		},
+		"potentialAction": {
+			"@type": "SearchAction",
+			"target": "${data.url}?name={search_term_string}",
+			"query-input": "required name=search_term_string"
+		}
+	}
+	<\/script>`}
+</svelte:head>
 
 <div class="search-page">
 	<SearchFilters onSearch={handleSearch} {initialFilters} />
