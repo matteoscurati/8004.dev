@@ -47,12 +47,10 @@ export class ActivityTracker {
 	 */
 	startPolling(intervalMs: number = 30000): void {
 		if (this.isPolling) {
-			console.warn('ActivityTracker: Already polling');
 			return;
 		}
 
 		this.isPolling = true;
-		console.log(`ActivityTracker: Starting polling every ${intervalMs}ms`);
 
 		// Initial snapshot (don't emit events on first load)
 		this.captureSnapshot().catch(err => {
@@ -77,7 +75,6 @@ export class ActivityTracker {
 			clearInterval(this.pollInterval);
 			this.pollInterval = null;
 			this.isPolling = false;
-			console.log('ActivityTracker: Stopped polling');
 		}
 	}
 
@@ -105,7 +102,6 @@ export class ActivityTracker {
 			this.lastSnapshot.set(agent.id, this.toSnapshot(agent));
 		}
 
-		console.log(`ActivityTracker: Captured snapshot of ${this.lastSnapshot.size} agents`);
 	}
 
 	/**
@@ -199,7 +195,6 @@ export class ActivityTracker {
 
 		// Emit events if any
 		if (events.length > 0) {
-			console.log(`ActivityTracker: Detected ${events.length} event(s):`, events);
 			this.notifyListeners(events);
 		}
 	}

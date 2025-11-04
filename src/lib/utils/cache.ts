@@ -24,9 +24,23 @@ export class LRUCache<T> {
 	 * Generate a cache key from an object (filters, params, etc.)
 	 */
 	static hashKey(obj: any): string {
-		// Simple hash function for cache keys
-		// Sorts keys to ensure consistent hashing
-		const str = JSON.stringify(obj, Object.keys(obj).sort());
+		// Recursively sort object keys for consistent hashing
+		const sortObject = (o: any): any => {
+			if (Array.isArray(o)) {
+				return o.map(sortObject);
+			}
+			if (o !== null && typeof o === 'object') {
+				return Object.keys(o)
+					.sort()
+					.reduce((result: any, key) => {
+						result[key] = sortObject(o[key]);
+						return result;
+					}, {});
+			}
+			return o;
+		};
+
+		const str = JSON.stringify(sortObject(obj));
 		let hash = 0;
 		for (let i = 0; i < str.length; i++) {
 			const char = str.charCodeAt(i);

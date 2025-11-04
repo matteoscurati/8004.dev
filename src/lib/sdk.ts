@@ -17,6 +17,18 @@ let sdkInstance: SDK | null = null;
 // for Svelte 5 reactivity to detect changes
 const searchCache = new LRUCache<SearchResult>(50, 5);
 
+// Helper to safely clone arrays (handles null, undefined, and empty arrays)
+function cloneArray<T>(arr: T[] | null | undefined): T[] | undefined {
+    if (!arr || !Array.isArray(arr)) return undefined;
+    return [...arr];
+}
+
+// Helper to safely clone objects (handles null and undefined)
+function cloneObject<T extends Record<string, any>>(obj: T | null | undefined): T | undefined {
+    if (!obj || typeof obj !== 'object') return undefined;
+    return { ...obj };
+}
+
 export function getSDK(): SDK {
     if (!browser) {
         throw new Error('SDK can only be initialized in the browser');
@@ -179,14 +191,14 @@ export async function searchAgents(
             return {
                 items: cached.items.map(item => ({
                     ...item,
-                    mcpTools: item.mcpTools ? [...item.mcpTools] : undefined,
-                    a2aSkills: item.a2aSkills ? [...item.a2aSkills] : undefined,
-                    mcpPrompts: item.mcpPrompts ? [...item.mcpPrompts] : undefined,
-                    mcpResources: item.mcpResources ? [...item.mcpResources] : undefined,
-                    supportedTrusts: item.supportedTrusts ? [...item.supportedTrusts] : undefined,
-                    owners: item.owners ? [...item.owners] : undefined,
-                    operators: item.operators ? [...item.operators] : undefined,
-                    extras: item.extras ? { ...item.extras } : undefined
+                    mcpTools: cloneArray(item.mcpTools),
+                    a2aSkills: cloneArray(item.a2aSkills),
+                    mcpPrompts: cloneArray(item.mcpPrompts),
+                    mcpResources: cloneArray(item.mcpResources),
+                    supportedTrusts: cloneArray(item.supportedTrusts),
+                    owners: cloneArray(item.owners),
+                    operators: cloneArray(item.operators),
+                    extras: cloneObject(item.extras)
                 })),
                 nextCursor: cached.nextCursor,
                 totalMatches: cached.totalMatches
@@ -213,8 +225,6 @@ export async function searchAgents(
     delete sdkFilters.supportedTrust;
 
     // Helper function to map SDK agent to our AgentResult interface
-    // IMPORTANT: Always create NEW object references for Svelte 5 reactivity
-    // Svelte 5 uses Proxy objects and needs to detect changes via new references
     const mapAgent = (agent: any): AgentResult => ({
         id: agent.agentId,
         name: agent.name,
@@ -222,18 +232,18 @@ export async function searchAgents(
         imageUrl: agent.image,
         mcp: agent.mcp,
         a2a: agent.a2a,
-        mcpTools: agent.mcpTools ? [...agent.mcpTools] : undefined,
-        a2aSkills: agent.a2aSkills ? [...agent.a2aSkills] : undefined,
-        mcpPrompts: agent.mcpPrompts ? [...agent.mcpPrompts] : undefined,
-        mcpResources: agent.mcpResources ? [...agent.mcpResources] : undefined,
+        mcpTools: agent.mcpTools,
+        a2aSkills: agent.a2aSkills,
+        mcpPrompts: agent.mcpPrompts,
+        mcpResources: agent.mcpResources,
         active: agent.active,
         x402support: agent.x402support,
-        supportedTrusts: agent.supportedTrusts ? [...agent.supportedTrusts] : undefined,
-        owners: agent.owners ? [...agent.owners] : undefined,
-        operators: agent.operators ? [...agent.operators] : undefined,
+        supportedTrusts: agent.supportedTrusts,
+        owners: agent.owners,
+        operators: agent.operators,
         chainId: agent.chainId,
         walletAddress: agent.walletAddress,
-        extras: agent.extras ? { ...agent.extras } : undefined
+        extras: agent.extras
     });
 
     // Determine if we need to fetch multiple pages for client-side filtering
@@ -263,9 +273,8 @@ export async function searchAgents(
         }
 
         // Return all results without pagination
-        // Always return NEW array reference for Svelte 5 reactivity
         const result = {
-            items: [...allItems],
+            items: allItems,
             nextCursor: undefined,
             totalMatches: allItems.length
         };
@@ -282,9 +291,8 @@ export async function searchAgents(
     const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
     const items = result.items.map(mapAgent);
 
-    // Always return NEW array reference for Svelte 5 reactivity
     const searchResult = {
-        items: [...items],
+        items,
         nextCursor: result.nextCursor
     };
 

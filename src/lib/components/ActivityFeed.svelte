@@ -17,27 +17,21 @@
 	}
 
 	onMount(async () => {
-		console.log('🚀 ActivityFeed: Initializing blockchain event listener');
-
 		// Load persisted events from storage first
 		const storedEvents = ActivityStorage.loadEvents();
 		if (storedEvents.length > 0) {
 			events = storedEvents;
-			console.log(`📦 Loaded ${storedEvents.length} events from storage`);
 		}
 
 		// Fetch historical events from blockchain with progressive updates
 		try {
 			isLoadingHistory = true;
-			console.log('📚 Fetching historical blockchain events...');
 
 			const historicalEvents = await blockchainEventListener.fetchHistoricalEvents(
 				undefined,
 				'latest',
 				// Progressive update callback
 				(progressEvents) => {
-					console.log(`📊 Progress update: ${progressEvents.length} events`);
-
 					// Merge with stored events, remove duplicates
 					const allEvents = [...progressEvents, ...storedEvents];
 					const uniqueEvents = Array.from(
@@ -65,18 +59,14 @@
 
 			// Persist to storage
 			ActivityStorage.saveEvents(events);
-
-			console.log(`✅ Loaded ${historicalEvents.length} historical events (${uniqueEvents.length} total unique)`);
 		} catch (error) {
-			console.error('❌ Failed to fetch historical events:', error);
+			console.error('Failed to fetch historical events:', error);
 		} finally {
 			isLoadingHistory = false;
 		}
 
 		// Subscribe to new real-time events
 		unsubscribe = blockchainEventListener.subscribe((newEvents) => {
-			console.log('📡 Received new blockchain events:', newEvents.length);
-
 			// Prepend new events (newest first)
 			events = [...newEvents, ...events];
 
@@ -93,9 +83,8 @@
 		try {
 			await blockchainEventListener.start();
 			isTracking = blockchainEventListener.isActive();
-			console.log('✅ Started listening to blockchain events');
 		} catch (error) {
-			console.error('❌ Failed to start blockchain event listener:', error);
+			console.error('Failed to start blockchain event listener:', error);
 		}
 	});
 

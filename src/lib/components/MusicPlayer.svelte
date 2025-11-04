@@ -24,7 +24,6 @@
 				// Ensure position is within current viewport
 				clampPosition();
 			} catch (e) {
-				console.warn('Failed to restore player position');
 			}
 		}
 	});

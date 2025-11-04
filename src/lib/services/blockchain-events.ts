@@ -38,7 +38,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 		this.provider = sdk.web3Client.provider;
 		this.contract = sdk.getIdentityRegistry();
 
-		console.log('🔗 Blockchain Event Listener initialized');
 	}
 
 	/**
@@ -54,11 +53,9 @@ export class ERC8004EventListener implements BlockchainEventListener {
 		if (!this.contract) throw new Error('Contract not initialized');
 
 		this.isListening = true;
-		console.log('👂 Started listening to blockchain events');
 
 		// Listen for Registered events
 		const onRegistered = async (agentId: bigint, tokenURI: string, owner: string, event: ethers.EventLog) => {
-			console.log('📡 Registered event:', { agentId: agentId.toString(), owner });
 
 			try {
 				const block = await event.getBlock();
@@ -79,7 +76,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 
 		// Listen for MetadataSet events
 		const onMetadataSet = async (agentId: bigint, indexedKey: string, key: string, value: string, event: ethers.EventLog) => {
-			console.log('📡 MetadataSet event:', { agentId: agentId.toString(), key });
 
 			try {
 				const block = await event.getBlock();
@@ -122,7 +118,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 		this.eventListeners = [];
 		this.isListening = false;
 
-		console.log('🛑 Stopped listening to blockchain events');
 	}
 
 	/**
@@ -158,7 +153,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 			fromBlock = Math.max(0, latestBlock - 2000);
 		}
 
-		console.log(`📚 Fetching historical events from block ${fromBlock} to ${resolvedToBlock}`);
 
 		const events: ActivityEvent[] = [];
 
@@ -173,7 +167,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 				batches.push([start, end]);
 			}
 
-			console.log(`   Fetching in ${batches.length} batches of ${BATCH_SIZE} blocks each`);
 
 			// Fetch events in batches
 			for (let i = 0; i < batches.length; i++) {
@@ -236,14 +229,12 @@ export class ERC8004EventListener implements BlockchainEventListener {
 
 				// Progress indicator
 				if ((i + 1) % 10 === 0 || i === batches.length - 1) {
-					console.log(`   Progress: ${i + 1}/${batches.length} batches (${events.length} events so far)`);
 				}
 			}
 
 			// Sort by timestamp (newest first)
 			events.sort((a, b) => b.timestamp - a.timestamp);
 
-			console.log(`✅ Fetched ${events.length} historical events`);
 		} catch (error) {
 			console.error('Error fetching historical events:', error);
 			throw error;
@@ -267,7 +258,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 		// Decode the value from bytes/hex if needed
 		const decodedValue = this.decodeMetadataValue(value);
 
-		console.log(`🔍 Parsing metadata: key="${key}", value="${decodedValue.substring(0, 100)}${decodedValue.length > 100 ? '...' : ''}"`);
 
 		// Parse based on key
 		switch (key) {
@@ -286,7 +276,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 						}
 					});
 				} catch (error) {
-					console.warn('Failed to parse status value:', decodedValue);
 				}
 				break;
 
@@ -304,7 +293,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 						});
 					}
 				} catch (error) {
-					console.warn('Failed to parse x402 value:', decodedValue);
 				}
 				break;
 
@@ -327,7 +315,6 @@ export class ERC8004EventListener implements BlockchainEventListener {
 						});
 					}
 				} catch (error) {
-					console.warn('Failed to parse MCP tools:', decodedValue);
 				}
 				break;
 
@@ -350,13 +337,11 @@ export class ERC8004EventListener implements BlockchainEventListener {
 						});
 					}
 				} catch (error) {
-					console.warn('Failed to parse A2A skills:', decodedValue);
 				}
 				break;
 
 			default:
 				// Log but ignore other metadata keys
-				console.log(`   → Skipping metadata key: ${key}`);
 				break;
 		}
 
