@@ -80,6 +80,7 @@
 				src={agent.imageUrl}
 				alt={agent.name}
 				class="agent-image"
+				loading="lazy"
 				onerror={handleImageError}
 			/>
 		{:else}
@@ -87,6 +88,7 @@
 				src={generatePixelArt(agent.id)}
 				alt={`${agent.name} generated avatar`}
 				class="agent-image pixel-avatar"
+				loading="lazy"
 			/>
 		{/if}
 		<div class="agent-info">
@@ -174,11 +176,29 @@
 		image-rendering: pixelated;
 		flex-shrink: 0;
 		object-fit: cover;
+		background: linear-gradient(
+			90deg,
+			rgba(0, 255, 65, 0.05) 0%,
+			rgba(0, 255, 65, 0.1) 50%,
+			rgba(0, 255, 65, 0.05) 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s ease-in-out infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: -100% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
 	}
 
 	.agent-image.pixel-avatar {
 		image-rendering: pixelated;
 		background-color: transparent;
+		animation: none;
 	}
 
 	.agent-info {

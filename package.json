@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "node scripts/fix-agent0-sdk.js && vite build",
+		"build:analyze": "npm run build && open bundle-stats.html",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"postinstall": "node scripts/fix-agent0-sdk.js",
@@ -27,6 +28,7 @@
 		"@vitest/coverage-v8": "^4.0.6",
 		"@vitest/ui": "^4.0.6",
 		"happy-dom": "^20.0.10",
+		"rollup-plugin-visualizer": "^6.0.5",
 		"svelte": "^5.41.0",
 		"svelte-check": "^4.3.3",
 		"typescript": "^5.9.3",
@@ -34,7 +36,6 @@
 		"vitest": "^4.0.6"
 	},
 	"dependencies": {
-		"agent0-sdk": "^0.2.1",
-		"ethers": "^6.15.0"
+		"agent0-sdk": "^0.2.1"
 	}
 }

@@ -8,8 +8,15 @@ import {
     PUBLIC_PINATA_JWT
 } from '$env/static/public';
 import { matchesAllFilters, hasClientSideFilters } from '$lib/utils/filters';
+import { LRUCache } from '$lib/utils/cache';
 
 let sdkInstance: SDK | null = null;
+
+// Cache for search results (5 minute TTL, max 50 entries)
+const searchCache = new LRUCache<SearchResult>(50, 5);
+
+// Cache for count results (5 minute TTL, max 30 entries)
+const countCache = new LRUCache<number>(30, 5);
 
 export function getSDK(): SDK {
     if (!browser) {
@@ -90,6 +97,14 @@ export interface SearchResult {
 
 // Count total agents matching filters (lightweight, returns only count)
 export async function countAgents(filters: SearchFilters): Promise<number> {
+    // Check cache first
+    const cacheKey = LRUCache.hashKey({ type: 'count', filters });
+    const cached = countCache.get(cacheKey);
+
+    if (cached !== null) {
+        return cached;
+    }
+
     const sdk = getSDK();
 
     // IMPORTANT: Array filters and name filter must be handled client-side:
@@ -149,6 +164,9 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
         cursor = result.nextCursor;
     }
 
+    // Cache the result
+    countCache.set(cacheKey, count);
+
     return count;
 }
 
@@ -157,6 +175,14 @@ export async function searchAgents(
     pageSize: number = 50,
     cursor?: string
 ): Promise<SearchResult> {
+    // Check cache first (include cursor in cache key for pagination)
+    const cacheKey = LRUCache.hashKey({ type: 'search', filters, pageSize, cursor });
+    const cached = searchCache.get(cacheKey);
+
+    if (cached !== null) {
+        return cached;
+    }
+
     const sdk = getSDK();
 
     // IMPORTANT: Array filters (mcpTools, a2aSkills, supportedTrust) and name filter require special handling:
@@ -225,22 +251,30 @@ export async function searchAgents(
             if (!nextCursor) break;
         }
 
-        // Return all results without pagination
-        return {
+        // Cache and return all results without pagination
+        const result = {
             items: allItems,
             nextCursor: undefined,
             totalMatches: allItems.length
         };
+
+        searchCache.set(cacheKey, result);
+        return result;
     }
 
     // Normal flow without client-side filters - standard pagination
-    const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
-    const items = result.items.map(mapAgent);
+    const sdkResult = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+    const items = sdkResult.items.map(mapAgent);
 
-    return {
+    const result = {
         items,
-        nextCursor: result.nextCursor
+        nextCursor: sdkResult.nextCursor
     };
+
+    // Cache the result
+    searchCache.set(cacheKey, result);
+
+    return result;
 }
 
 export async function getAgentReputation(agentId: string): Promise<ReputationSummary> {
