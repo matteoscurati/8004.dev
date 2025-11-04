@@ -39,6 +39,22 @@ describe('URL Parameters Utilities', () => {
 			});
 		});
 
+		it('should parse supportedTrust parameter', () => {
+			const params = new URLSearchParams('supportedTrust=reputation,crypto-economic');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				supportedTrust: ['reputation', 'crypto-economic']
+			});
+		});
+
+		it('should parse supportedTrust parameter with spaces', () => {
+			const params = new URLSearchParams('supportedTrust=reputation, crypto-economic, social');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				supportedTrust: ['reputation', 'crypto-economic', 'social']
+			});
+		});
+
 		it('should parse active parameter', () => {
 			const params = new URLSearchParams('active=true');
 			const filters = parseFiltersFromURL(params);
@@ -59,13 +75,14 @@ describe('URL Parameters Utilities', () => {
 
 		it('should parse multiple parameters together', () => {
 			const params = new URLSearchParams(
-				'name=agent&mcpTools=github,postgres&a2aSkills=python&active=true&x402=true'
+				'name=agent&mcpTools=github,postgres&a2aSkills=python&supportedTrust=reputation&active=true&x402=true'
 			);
 			const filters = parseFiltersFromURL(params);
 			expect(filters).toEqual({
 				name: 'agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python'],
+				supportedTrust: ['reputation'],
 				active: true,
 				x402support: true
 			});
@@ -105,6 +122,13 @@ describe('URL Parameters Utilities', () => {
 			expect(urlString).toBe('?a2aSkills=python%2Cdata-analysis');
 		});
 
+		it('should convert supportedTrust filter to URL string', () => {
+			const urlString = filtersToURLString({
+				supportedTrust: ['reputation', 'crypto-economic']
+			});
+			expect(urlString).toBe('?supportedTrust=reputation%2Ccrypto-economic');
+		});
+
 		it('should convert active filter to URL string', () => {
 			const urlString = filtersToURLString({ active: true });
 			expect(urlString).toBe('?active=true');
@@ -120,6 +144,7 @@ describe('URL Parameters Utilities', () => {
 				name: 'agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python'],
+				supportedTrust: ['reputation'],
 				active: true,
 				x402support: true
 			});
@@ -127,6 +152,7 @@ describe('URL Parameters Utilities', () => {
 			expect(urlString).toContain('name=agent');
 			expect(urlString).toContain('mcpTools=github%2Cpostgres');
 			expect(urlString).toContain('a2aSkills=python');
+			expect(urlString).toContain('supportedTrust=reputation');
 			expect(urlString).toContain('active=true');
 			expect(urlString).toContain('x402=true');
 		});
@@ -146,6 +172,14 @@ describe('URL Parameters Utilities', () => {
 			});
 			expect(urlString).toBe('?name=test');
 		});
+
+		it('should not include empty supportedTrust array', () => {
+			const urlString = filtersToURLString({
+				name: 'test',
+				supportedTrust: []
+			});
+			expect(urlString).toBe('?name=test');
+		});
 	});
 
 	describe('Round-trip conversion', () => {
@@ -154,6 +188,7 @@ describe('URL Parameters Utilities', () => {
 				name: 'test-agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python', 'data-analysis'],
+				supportedTrust: ['reputation', 'crypto-economic'],
 				active: true,
 				x402support: true
 			};
