@@ -11,7 +11,12 @@
 		withX402: 0
 	});
 
+	let mounted = false;
+
 	onMount(async () => {
+		// Prevent multiple mounts
+		if (mounted) return;
+		mounted = true;
 		await loadStats();
 	});
 

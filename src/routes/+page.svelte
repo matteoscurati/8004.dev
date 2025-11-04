@@ -103,8 +103,13 @@
 	}
 
 	let initialFilters = $state<Filters>({});
+	let mounted = false;
 
 	onMount(() => {
+		// Prevent multiple mounts (Safari Lockdown Mode bug)
+		if (mounted) return;
+		mounted = true;
+
 		// Parse filters from URL if present
 		const urlFilters = parseFiltersFromURL($page.url.searchParams);
 		initialFilters = urlFilters;

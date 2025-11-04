@@ -16,7 +16,12 @@
 		collapsed = !collapsed;
 	}
 
+	let mounted = false;
+
 	onMount(async () => {
+		// Prevent multiple mounts
+		if (mounted) return;
+		mounted = true;
 		// Load persisted events from storage first
 		const storedEvents = ActivityStorage.loadEvents();
 		if (storedEvents.length > 0) {
