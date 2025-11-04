@@ -13,12 +13,9 @@
 	let position = $state({ x: 20, y: 20 });
 	let dragOffset = { x: 0, y: 0 };
 
-	let mounted = false;
-
 	onMount(() => {
-		// Prevent multiple mounts
-		if (mounted) return;
-		mounted = true;
+		// Prevent multiple mounts (handled at module level in +layout.svelte)
+		// MusicPlayer should only exist once in layout
 		synth = new ChiptuneSynth();
 
 		// Restore position from localStorage

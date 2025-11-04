@@ -1,3 +1,8 @@
+<script lang="ts" module>
+	// Module-level mount guard
+	let isActivityFeedMounted = false;
+</script>
+
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { blockchainEventListener } from '$lib/services/blockchain-events';
@@ -16,12 +21,14 @@
 		collapsed = !collapsed;
 	}
 
-	let mounted = false;
-
 	onMount(async () => {
 		// Prevent multiple mounts
-		if (mounted) return;
-		mounted = true;
+		if (isActivityFeedMounted) {
+			console.warn('ActivityFeed already mounted, skipping');
+			return;
+		}
+		isActivityFeedMounted = true;
+		console.log('ActivityFeed mounting for the first time');
 		// Load persisted events from storage first
 		const storedEvents = ActivityStorage.loadEvents();
 		if (storedEvents.length > 0) {

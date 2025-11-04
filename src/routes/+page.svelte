@@ -1,3 +1,8 @@
+<script lang="ts" module>
+	// Module-level mount guard (survives component re-renders)
+	let isPageMounted = false;
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
@@ -103,12 +108,15 @@
 	}
 
 	let initialFilters = $state<Filters>({});
-	let mounted = false;
 
 	onMount(() => {
 		// Prevent multiple mounts (Safari Lockdown Mode bug)
-		if (mounted) return;
-		mounted = true;
+		if (isPageMounted) {
+			console.warn('Page already mounted, skipping onMount');
+			return;
+		}
+		isPageMounted = true;
+		console.log('Page mounting for the first time');
 
 		// Parse filters from URL if present
 		const urlFilters = parseFiltersFromURL($page.url.searchParams);

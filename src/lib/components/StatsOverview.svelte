@@ -1,3 +1,8 @@
+<script lang="ts" module>
+	// Module-level mount guard
+	let isStatsOverviewMounted = false;
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { searchAgents, type AgentResult } from '$lib/sdk';
@@ -11,12 +16,14 @@
 		withX402: 0
 	});
 
-	let mounted = false;
-
 	onMount(async () => {
 		// Prevent multiple mounts
-		if (mounted) return;
-		mounted = true;
+		if (isStatsOverviewMounted) {
+			console.warn('StatsOverview already mounted, skipping');
+			return;
+		}
+		isStatsOverviewMounted = true;
+		console.log('StatsOverview mounting for the first time');
 		await loadStats();
 	});
 
