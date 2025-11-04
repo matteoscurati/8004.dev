@@ -24,6 +24,8 @@
 		}
 
 		// Fetch historical events from blockchain with progressive updates
+		// Skip if RPC is blocked (Safari Lockdown Mode, network issues, etc.)
+		let blockchainAvailable = true;
 		try {
 			isLoadingHistory = true;
 
@@ -60,31 +62,42 @@
 			// Persist to storage
 			ActivityStorage.saveEvents(events);
 		} catch (error) {
+			// Network/RPC blocked (Safari Lockdown Mode, etc.)
+			// Use only stored events, don't retry
+			blockchainAvailable = false;
 			console.error('Failed to fetch historical events:', error);
 		} finally {
 			isLoadingHistory = false;
 		}
 
-		// Subscribe to new real-time events
-		unsubscribe = blockchainEventListener.subscribe((newEvents) => {
-			// Prepend new events (newest first)
-			events = [...newEvents, ...events];
+		// Only subscribe and start listener if blockchain is available
+		if (blockchainAvailable) {
+			// Subscribe to new real-time events
+			unsubscribe = blockchainEventListener.subscribe((newEvents) => {
+				// Prepend new events (newest first)
+				events = [...newEvents, ...events];
 
-			// Play sound notification for each new event
-			for (const event of newEvents) {
-				soundPlayer.playEventNotification(event);
+				// Play sound notification for each new event (skip if sound unavailable)
+				try {
+					for (const event of newEvents) {
+						soundPlayer.playEventNotification(event);
+					}
+				} catch (error) {
+					// Sound not available (Safari Lockdown Mode, etc.)
+					// Continue without sound
+				}
+
+				// Persist to storage
+				ActivityStorage.saveEvents(events);
+			});
+
+			// Start listening for new events
+			try {
+				await blockchainEventListener.start();
+				isTracking = blockchainEventListener.isActive();
+			} catch (error) {
+				console.error('Failed to start blockchain event listener:', error);
 			}
-
-			// Persist to storage
-			ActivityStorage.saveEvents(events);
-		});
-
-		// Start listening for new events
-		try {
-			await blockchainEventListener.start();
-			isTracking = blockchainEventListener.isActive();
-		} catch (error) {
-			console.error('Failed to start blockchain event listener:', error);
 		}
 	});
 

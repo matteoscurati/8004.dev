@@ -23,10 +23,25 @@
 	let currentFilters = $state<Filters>({});
 	const pageSize = 20;
 
+	// Throttle URL updates to prevent Safari Lockdown Mode rate limiting
+	let lastURLUpdate = 0;
+	const URL_UPDATE_THROTTLE = 200; // ms
+
 	// Update URL with current filters
 	function updateURL(filters: Filters) {
-		const newURL = filtersToURLString(filters);
-		goto(newURL, { replaceState: true, noScroll: true, keepFocus: true });
+		const now = Date.now();
+		if (now - lastURLUpdate < URL_UPDATE_THROTTLE) {
+			return; // Skip update if too soon
+		}
+		lastURLUpdate = now;
+
+		try {
+			const newURL = filtersToURLString(filters);
+			goto(newURL, { replaceState: true, noScroll: true, keepFocus: true });
+		} catch (error) {
+			// Safari Lockdown Mode may block replaceState after 100 calls
+			console.error('Failed to update URL:', error);
+		}
 	}
 
 	async function handleSearch(filters: Filters, append: boolean = false) {
