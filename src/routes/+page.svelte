@@ -109,6 +109,9 @@
 
 	let initialFilters = $state<Filters>({});
 
+	// Detect Safari Lockdown Mode by checking if RPC calls fail
+	let isLockdownMode = $state(false);
+
 	onMount(() => {
 		// Prevent multiple mounts (Safari Lockdown Mode bug)
 		if (isPageMounted) {
@@ -117,6 +120,19 @@
 		}
 		isPageMounted = true;
 		console.log('Page mounting for the first time');
+
+		// Detect Lockdown Mode by trying to access AudioContext
+		try {
+			if (typeof window !== 'undefined') {
+				const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+				if (!AudioContextClass) {
+					isLockdownMode = true;
+					console.log('Safari Lockdown Mode detected - disabling blockchain features');
+				}
+			}
+		} catch (e) {
+			isLockdownMode = true;
+		}
 
 		// Parse filters from URL if present
 		const urlFilters = parseFiltersFromURL($page.url.searchParams);
@@ -210,11 +226,19 @@
 </svelte:head>
 
 <div class="search-page">
-	<StatsOverview />
+	{#if !isLockdownMode}
+		<StatsOverview />
 
-	<div class="activity-feed-wrapper">
-		<ActivityFeed />
-	</div>
+		<div class="activity-feed-wrapper">
+			<ActivityFeed />
+		</div>
+	{:else}
+		<div class="lockdown-notice pixel-card">
+			<h3>⚠ Limited Mode</h3>
+			<p>Safari Lockdown Mode detected. Blockchain features are disabled.</p>
+			<p>Search functionality is still available below.</p>
+		</div>
+	{/if}
 
 	<SearchFilters onSearch={handleSearch} {initialFilters} />
 
@@ -296,6 +320,26 @@
 <style>
 	.search-page {
 		width: 100%;
+	}
+
+	.lockdown-notice {
+		padding: calc(var(--spacing-unit) * 3);
+		text-align: center;
+		margin-bottom: calc(var(--spacing-unit) * 4);
+		border-color: #ffaa00;
+		background-color: rgba(255, 170, 0, 0.1);
+	}
+
+	.lockdown-notice h3 {
+		color: #ffaa00;
+		font-size: 14px;
+		margin-bottom: calc(var(--spacing-unit) * 2);
+	}
+
+	.lockdown-notice p {
+		font-size: 10px;
+		margin: var(--spacing-unit) 0;
+		color: var(--color-text-secondary);
 	}
 
 	.activity-feed-wrapper {
