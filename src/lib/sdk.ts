@@ -84,16 +84,12 @@ export interface ReputationSummary {
 export interface SearchResult {
     items: AgentResult[];
     nextCursor?: string;
-    totalMatches?: number; // Total number of matches (for client-side filtering)
+    totalMatches?: number;
 }
 
 // Count total agents matching filters (lightweight, returns only count)
 export async function countAgents(filters: SearchFilters): Promise<number> {
     const sdk = getSDK();
-
-    // Remove name filter as it requires client-side filtering
-    const sdkFilters = { ...filters };
-    delete sdkFilters.name;
 
     let count = 0;
     let cursor: string | undefined = undefined;
@@ -101,7 +97,7 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
 
     // Fetch all pages to count total
     while (true) {
-        const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+        const result = await sdk.searchAgents(filters, undefined, pageSize, cursor);
         count += result.items.length;
 
         if (!result.nextCursor) break;
@@ -118,73 +114,10 @@ export async function searchAgents(
 ): Promise<SearchResult> {
     const sdk = getSDK();
 
-    // Extract name filter for client-side filtering
-    const nameFilter = filters.name?.toLowerCase();
-    const sdkFilters = { ...filters };
-    delete sdkFilters.name; // Remove name from SDK filters as it doesn't work well
+    // Pass all filters directly to SDK (including name filter)
+    const result = await sdk.searchAgents(filters, undefined, pageSize, cursor);
 
-    // If searching by name and no cursor, fetch multiple pages to ensure good results
-    if (nameFilter && !cursor) {
-        let allItems: any[] = [];
-        let nextCursor: string | undefined = undefined;
-        let pagesFetched = 0;
-        const maxPages = 10; // Fetch up to 10 pages (500 agents) for name search
-
-        // Keep fetching until we have enough matches or run out of pages
-        while (pagesFetched < maxPages) {
-            const result = await sdk.searchAgents(sdkFilters, undefined, 50, nextCursor);
-
-            const mappedItems = result.items.map((agent: any) => ({
-                id: agent.agentId,
-                name: agent.name,
-                description: agent.description,
-                imageUrl: agent.image,
-                // Capabilities
-                mcp: agent.mcp,
-                a2a: agent.a2a,
-                mcpTools: agent.mcpTools,
-                a2aSkills: agent.a2aSkills,
-                mcpPrompts: agent.mcpPrompts,
-                mcpResources: agent.mcpResources,
-                // Status
-                active: agent.active,
-                x402support: agent.x402support,
-                // Trust & Governance
-                supportedTrusts: agent.supportedTrusts,
-                owners: agent.owners,
-                operators: agent.operators,
-                // Blockchain
-                chainId: agent.chainId,
-                walletAddress: agent.walletAddress,
-                // Metadata
-                extras: agent.extras
-            }));
-
-            allItems.push(...mappedItems);
-            nextCursor = result.nextCursor;
-            pagesFetched++;
-
-            // Stop if no more pages or we have enough matches
-            if (!nextCursor) break;
-        }
-
-        // Filter by name (case-insensitive substring match)
-        const filteredItems = allItems.filter(agent =>
-            agent.name?.toLowerCase().includes(nameFilter)
-        );
-
-        // For name search, return all results (no pagination)
-        // This is simpler and provides better UX for text search
-        return {
-            items: filteredItems,
-            nextCursor: undefined, // No pagination for name search
-            totalMatches: filteredItems.length
-        };
-    }
-
-    // Normal flow without name filtering
-    const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
-
+    // Map SDK response to our AgentResult interface
     const items = result.items.map((agent: any) => ({
         id: agent.agentId,
         name: agent.name,
