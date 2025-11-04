@@ -126,7 +126,8 @@
 			{/if}
 		</h2>
 		<button class="toggle-button" onclick={() => (filtersExpanded = !filtersExpanded)}>
-			{filtersExpanded ? '▼ HIDE' : '▶ SHOW'}
+			<span class="toggle-icon">{filtersExpanded ? '▼' : '▶'}</span>
+			<span class="toggle-text">{filtersExpanded ? 'HIDE' : 'SHOW'}</span>
 		</button>
 	</div>
 
@@ -254,11 +255,26 @@
 		cursor: pointer;
 		padding: var(--spacing-unit);
 		transition: all 0.2s;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: calc(var(--spacing-unit) / 2);
+		line-height: 1;
+		vertical-align: middle;
 	}
 
 	.toggle-button:hover {
 		color: var(--color-text);
 		text-shadow: 0 0 10px var(--color-text);
+	}
+
+	.toggle-icon {
+		display: inline-block;
+		transform: translateY(-1px);
+	}
+
+	.toggle-text {
+		display: inline-block;
 	}
 
 	.active-badge {

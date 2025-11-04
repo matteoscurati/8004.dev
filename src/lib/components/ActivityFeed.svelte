@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { activityTracker, type ActivityEvent } from '$lib/services/activity-tracker';
+	import { blockchainEventListener } from '$lib/services/blockchain-events';
+	import type { ActivityEvent } from '$lib/services/activity-tracker';
 	import { ActivityStorage } from '$lib/utils/activity-storage';
 	import { soundPlayer } from '$lib/utils/sound';
 
@@ -8,13 +9,74 @@
 	let unsubscribe: (() => void) | null = null;
 	let isTracking = $state(false);
 	let soundEnabled = $state(soundPlayer.isEnabled());
+	let collapsed = $state(false);
+	let isLoadingHistory = $state(false);
 
-	onMount(() => {
-		// Load persisted events from storage
-		events = ActivityStorage.loadEvents();
+	function toggleCollapse() {
+		collapsed = !collapsed;
+	}
 
-		// Subscribe to new events
-		unsubscribe = activityTracker.subscribe((newEvents) => {
+	onMount(async () => {
+		console.log('🚀 ActivityFeed: Initializing blockchain event listener');
+
+		// Load persisted events from storage first
+		const storedEvents = ActivityStorage.loadEvents();
+		if (storedEvents.length > 0) {
+			events = storedEvents;
+			console.log(`📦 Loaded ${storedEvents.length} events from storage`);
+		}
+
+		// Fetch historical events from blockchain with progressive updates
+		try {
+			isLoadingHistory = true;
+			console.log('📚 Fetching historical blockchain events...');
+
+			const historicalEvents = await blockchainEventListener.fetchHistoricalEvents(
+				undefined,
+				'latest',
+				// Progressive update callback
+				(progressEvents) => {
+					console.log(`📊 Progress update: ${progressEvents.length} events`);
+
+					// Merge with stored events, remove duplicates
+					const allEvents = [...progressEvents, ...storedEvents];
+					const uniqueEvents = Array.from(
+						new Map(
+							allEvents.map(e => [`${e.agentId}-${e.type}-${e.timestamp}`, e])
+						).values()
+					);
+					uniqueEvents.sort((a, b) => b.timestamp - a.timestamp);
+
+					// Update UI with progressive results
+					events = uniqueEvents;
+				}
+			);
+
+			// Final merge with stored events, remove duplicates, sort by timestamp
+			const allEvents = [...historicalEvents, ...storedEvents];
+			const uniqueEvents = Array.from(
+				new Map(
+					allEvents.map(e => [`${e.agentId}-${e.type}-${e.timestamp}`, e])
+				).values()
+			);
+			uniqueEvents.sort((a, b) => b.timestamp - a.timestamp);
+
+			events = uniqueEvents;
+
+			// Persist to storage
+			ActivityStorage.saveEvents(events);
+
+			console.log(`✅ Loaded ${historicalEvents.length} historical events (${uniqueEvents.length} total unique)`);
+		} catch (error) {
+			console.error('❌ Failed to fetch historical events:', error);
+		} finally {
+			isLoadingHistory = false;
+		}
+
+		// Subscribe to new real-time events
+		unsubscribe = blockchainEventListener.subscribe((newEvents) => {
+			console.log('📡 Received new blockchain events:', newEvents.length);
+
 			// Prepend new events (newest first)
 			events = [...newEvents, ...events];
 
@@ -22,19 +84,26 @@
 			for (const event of newEvents) {
 				soundPlayer.playEventNotification(event);
 			}
+
+			// Persist to storage
+			ActivityStorage.saveEvents(events);
 		});
 
-		// Start tracking if not already active
-		if (!activityTracker.isActive()) {
-			activityTracker.startPolling(30000); // 30 seconds
+		// Start listening for new events
+		try {
+			await blockchainEventListener.start();
+			isTracking = blockchainEventListener.isActive();
+			console.log('✅ Started listening to blockchain events');
+		} catch (error) {
+			console.error('❌ Failed to start blockchain event listener:', error);
 		}
-		isTracking = activityTracker.isActive();
 	});
 
 	onDestroy(() => {
 		if (unsubscribe) {
 			unsubscribe();
 		}
+		blockchainEventListener.stop();
 	});
 
 	function getEventIcon(type: ActivityEvent['type']): string {
@@ -122,11 +191,21 @@
 			<button class="clear-button" onclick={clearHistory} title="Clear history">
 				✕
 			</button>
+			<button class="toggle-button" onclick={toggleCollapse}>
+				<span class="toggle-icon">{collapsed ? '▶' : '▼'}</span>
+				<span class="toggle-text">{collapsed ? 'SHOW' : 'HIDE'}</span>
+			</button>
 		</div>
 	</div>
 
+	{#if !collapsed}
 	<div class="feed-content">
-		{#if events.length === 0}
+		{#if isLoadingHistory && events.length === 0}
+			<div class="loading-feed">
+				<div class="pixel-spinner-small"></div>
+				<p>LOADING BLOCKCHAIN EVENTS...</p>
+			</div>
+		{:else if events.length === 0}
 			<div class="empty-feed">
 				<p>NO ACTIVITY YET</p>
 				<p class="hint">Activity will appear as agents are added or updated on the network</p>
@@ -154,20 +233,25 @@
 
 	<div class="feed-footer">
 		<span class="event-count">{events.length} event{events.length !== 1 ? 's' : ''}</span>
+		{#if isLoadingHistory && events.length > 0}
+			<span class="loading-more">
+				<span class="dot-pulse">●</span> Loading more...
+			</span>
+		{/if}
 	</div>
+	{/if}
 </div>
 
 <style>
 	.activity-feed {
 		display: flex;
 		flex-direction: column;
-		min-height: 300px;
-		max-height: 500px;
 		background: linear-gradient(
 			180deg,
 			rgba(0, 0, 0, 0.8) 0%,
 			rgba(0, 20, 10, 0.8) 100%
 		);
+		transition: all 0.3s ease;
 	}
 
 	.feed-header {
@@ -176,12 +260,44 @@
 		align-items: center;
 		padding: calc(var(--spacing-unit) * 2);
 		border-bottom: 3px solid var(--color-border);
+		gap: calc(var(--spacing-unit) * 2);
 	}
 
 	.feed-header h3 {
 		font-size: 12px;
 		color: var(--color-text);
 		margin: 0;
+	}
+
+	.toggle-button {
+		background: none;
+		border: none;
+		color: var(--color-text-secondary);
+		font-family: 'Press Start 2P', monospace;
+		font-size: 8px;
+		cursor: pointer;
+		padding: var(--spacing-unit);
+		transition: all 0.2s;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: calc(var(--spacing-unit) / 2);
+		line-height: 1;
+		vertical-align: middle;
+	}
+
+	.toggle-button:hover {
+		color: var(--color-text);
+		text-shadow: 0 0 10px var(--color-text);
+	}
+
+	.toggle-icon {
+		display: inline-block;
+		transform: translateY(-1px);
+	}
+
+	.toggle-text {
+		display: inline-block;
 	}
 
 	.feed-controls {
@@ -207,23 +323,26 @@
 
 	.sound-button,
 	.clear-button {
-		background: transparent;
-		border: 2px solid var(--color-border);
+		background: none;
+		border: none;
 		color: var(--color-text-secondary);
 		font-size: 10px;
-		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+		padding: var(--spacing-unit);
 		cursor: pointer;
 		transition: all 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.sound-button:hover {
-		border-color: var(--color-text);
 		color: var(--color-text);
+		text-shadow: 0 0 10px var(--color-text);
 	}
 
 	.clear-button:hover {
-		border-color: #ff4444;
 		color: #ff4444;
+		text-shadow: 0 0 10px #ff4444;
 	}
 
 	.feed-content {
@@ -232,6 +351,8 @@
 		padding: calc(var(--spacing-unit) * 2);
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border) transparent;
+		min-height: 200px;
+		max-height: 300px;
 	}
 
 	.feed-content::-webkit-scrollbar {
@@ -249,6 +370,36 @@
 
 	.feed-content::-webkit-scrollbar-thumb:hover {
 		background: var(--color-text);
+	}
+
+	.loading-feed {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		text-align: center;
+		gap: calc(var(--spacing-unit) * 2);
+	}
+
+	.loading-feed p {
+		color: var(--color-text);
+		font-size: 10px;
+		margin: 0;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	.pixel-spinner-small {
+		width: 24px;
+		height: 24px;
+		border: 3px solid var(--color-border);
+		border-top-color: var(--color-text);
+		border-radius: 0;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
 	}
 
 	.empty-feed {
@@ -276,13 +427,13 @@
 	.event-list {
 		display: flex;
 		flex-direction: column;
-		gap: calc(var(--spacing-unit) * 2);
+		gap: var(--spacing-unit);
 	}
 
 	.event-item {
 		display: flex;
-		gap: calc(var(--spacing-unit) * 2);
-		padding: calc(var(--spacing-unit) * 1.5);
+		gap: var(--spacing-unit);
+		padding: var(--spacing-unit);
 		border: 2px solid var(--color-border);
 		background: rgba(0, 0, 0, 0.3);
 		transition: all 0.2s;
@@ -306,7 +457,7 @@
 	}
 
 	.event-icon {
-		font-size: 20px;
+		font-size: 16px;
 		flex-shrink: 0;
 		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 	}
@@ -321,33 +472,33 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--spacing-unit);
-		margin-bottom: calc(var(--spacing-unit) / 2);
+		margin-bottom: calc(var(--spacing-unit) / 4);
 	}
 
 	.event-type {
-		font-size: 9px;
+		font-size: 8px;
 		font-weight: bold;
 		color: var(--color-text);
-		letter-spacing: 0.5px;
+		letter-spacing: 0.3px;
 	}
 
 	.event-time {
-		font-size: 8px;
+		font-size: 7px;
 		color: var(--color-text-secondary);
 		white-space: nowrap;
 	}
 
 	.event-agent {
-		font-size: 10px;
+		font-size: 9px;
 		color: var(--color-text);
-		margin-bottom: calc(var(--spacing-unit) / 2);
+		margin-bottom: calc(var(--spacing-unit) / 4);
 		word-break: break-word;
 	}
 
 	.event-detail {
-		font-size: 8px;
+		font-size: 7px;
 		color: var(--color-accent);
-		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+		padding: calc(var(--spacing-unit) / 4) calc(var(--spacing-unit) / 2);
 		border: 1px solid var(--color-accent);
 		display: inline-block;
 		background: rgba(255, 0, 255, 0.05);
@@ -365,6 +516,18 @@
 		font-size: 8px;
 		color: var(--color-text-secondary);
 		letter-spacing: 0.5px;
+	}
+
+	.loading-more {
+		font-size: 7px;
+		color: var(--color-text-secondary);
+		display: flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) / 2);
+	}
+
+	.dot-pulse {
+		animation: pulse 1.5s ease-in-out infinite;
 	}
 
 	/* Mobile responsive */

@@ -170,7 +170,9 @@
 <div class="search-page">
 	<StatsOverview />
 
-	<ActivityFeed />
+	<div class="activity-feed-wrapper">
+		<ActivityFeed />
+	</div>
 
 	<SearchFilters onSearch={handleSearch} {initialFilters} />
 
@@ -252,6 +254,10 @@
 <style>
 	.search-page {
 		width: 100%;
+	}
+
+	.activity-feed-wrapper {
+		margin-bottom: calc(var(--spacing-unit) * 4);
 	}
 
 	.loading-container {
