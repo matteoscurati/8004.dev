@@ -125,7 +125,7 @@ npm run test:ui
 
 ✅ **Test Framework**: Vitest configured and working
 ⏳ **Component Tests**: Waiting for @testing-library/svelte Svelte 5 runes support
-📝 **Documentation**: See `TEST_STRATEGY.md` for full testing strategy
+📝 **Coverage Goal**: 100% code coverage for all critical paths
 
 ### Test Files
 
@@ -242,14 +242,9 @@ node scripts/fix-agent0-sdk.js
 │   ├── test-search.js                    # Test SDK search
 │   └── README.md
 ├── static/                               # Static assets
-│   └── robots.txt
-├── docs/                                 # Technical documentation
-│   ├── SEARCH_FIX.md                     # Client-side search workaround
-│   ├── REPUTATION_ISSUE.md               # SDK reputation bug details
-│   ├── RESULTS_DISPLAY.md                # Pagination implementation
-│   ├── NETWORK_SUPPORT.md                # Multi-network guide
-│   ├── UI_CHANGES.md                     # UI architecture decisions
-│   └── SEARCHABLE_CAPABILITIES.md        # MCP/A2A capabilities guide
+│   ├── robots.txt
+│   ├── sitemap.xml
+│   └── og-image.svg
 ├── .env.example                          # Environment template
 ├── package.json
 ├── svelte.config.js
@@ -269,7 +264,7 @@ node scripts/fix-agent0-sdk.js
 
 **Workaround**: Feature disabled until SDK is updated.
 
-**Documentation**: See `REPUTATION_ISSUE.md` for detailed analysis.
+**More Info**: See [Issue #1](https://github.com/matteoscurati/8004.dev/issues/1) for detailed analysis.
 
 ### 2. Name Search is Client-Side Only
 
@@ -286,7 +281,7 @@ node scripts/fix-agent0-sdk.js
 - Slower for name searches
 - Limited to first 500 agents if more exist
 
-**Documentation**: See `SEARCH_FIX.md` for implementation details.
+**More Info**: See [Issue #2](https://github.com/matteoscurati/8004.dev/issues/2) for implementation details.
 
 ### 3. No Agents Have Capabilities Populated
 
@@ -301,7 +296,7 @@ node scripts/fix-agent0-sdk.js
 
 **Impact**: MCP Tools and A2A Skills filters won't return results.
 
-**Documentation**: See `SEARCHABLE_CAPABILITIES.md` for detailed explanation and future examples.
+**Note**: This is an ecosystem limitation, not an application bug. Filters are fully functional and ready for when agents populate capabilities.
 
 ### 4. Sepolia Network Only
 
@@ -311,9 +306,7 @@ node scripts/fix-agent0-sdk.js
 
 **Reason**: Agent0 contracts are primarily deployed on testnets during alpha phase.
 
-**Future**: Multi-network support planned (see TODO).
-
-**Documentation**: See `NETWORK_SUPPORT.md` for multi-network implementation guide.
+**Future**: Multi-network support planned. See [Issue #3](https://github.com/matteoscurati/8004.dev/issues/3) for implementation details.
 
 ## 🎨 Styling & Design
 
@@ -368,95 +361,6 @@ To avoid blocking the UI:
 2. Header shows "SHOWING X AGENTS"
 3. Background task counts total agents
 4. Header updates to "SHOWING X OF Y AGENTS" when count completes
-
-## 🚧 TODO / Roadmap
-
-### High Priority
-
-- [ ] **Complete Test Suite for Svelte 5**
-  - Wait for @testing-library/svelte to add full Svelte 5 runes support
-  - Complete component tests (AgentCard, SearchFilters, Pages)
-  - Achieve 100% test coverage
-  - Add E2E tests with Playwright
-  - See `TEST_STRATEGY.md` for details
-
-- [ ] **Fix Reputation Display**
-  - Wait for SDK update with correct contract method
-  - Re-enable ReputationDisplay component
-  - Test with live data
-
-- [ ] **Server-Side Name Search**
-  - Implement when SDK supports substring/fuzzy matching
-  - Remove client-side filtering workaround
-  - Improve performance for large agent lists
-
-- [ ] **Agent Detail Pages**
-  - Create `/agent/[id]` route
-  - Show full agent details, endpoints, owners, operators
-  - Display complete reputation history
-  - Show transaction/interaction history
-
-### Medium Priority
-
-- [ ] **Multi-Network Support**
-  - Add network selector in UI
-  - Support mainnet when contracts are deployed
-  - Support other L2s/sidechains (Polygon, Base, Arbitrum)
-  - Show agent counts per network
-
-- [ ] **Enhanced Search**
-  - Add sorting options (by name, reputation, registration date)
-  - Implement filter presets ("Most Reputable", "Recently Active", etc.)
-  - Add search history/saved searches
-  - Full-text search across descriptions
-
-- [ ] **Improve Capabilities Display**
-  - Add tooltips explaining MCP tools and A2A skills
-  - Link to MCP tool documentation
-  - Show capability metadata when available
-  - Visual icons for common tools/skills
-
-### Low Priority / Nice to Have
-
-- [ ] **Agent Comparison**
-  - Side-by-side comparison of 2-3 agents
-  - Highlight differences in capabilities
-  - Compare reputation scores
-
-- [ ] **Advanced Filtering**
-  - Filter by owner address
-  - Filter by registration date range
-  - Filter by reputation score range
-  - Combine filters with AND/OR logic
-
-- [ ] **Performance Optimizations**
-  - Implement virtual scrolling for very long lists
-  - Cache search results client-side
-  - Optimize bundle size
-  - Add service worker for offline support
-
-- [ ] **Analytics Dashboard**
-  - Total agents registered over time
-  - Most popular MCP tools/A2A skills
-  - Network activity charts
-  - Reputation trends
-
-- [ ] **Developer Tools**
-  - API endpoint for programmatic access
-  - Export search results to JSON/CSV
-  - Agent registration wizard
-  - Test agent functionality
-
-## 📖 Documentation
-
-Additional technical documentation is available in the repository:
-
-- **[SEARCH_FIX.md](./SEARCH_FIX.md)** - Client-side name filtering implementation
-- **[REPUTATION_ISSUE.md](./REPUTATION_ISSUE.md)** - SDK reputation bug analysis
-- **[RESULTS_DISPLAY.md](./RESULTS_DISPLAY.md)** - Smart pagination and count display
-- **[NETWORK_SUPPORT.md](./NETWORK_SUPPORT.md)** - Multi-network implementation guide
-- **[UI_CHANGES.md](./UI_CHANGES.md)** - UI architecture and separation of concerns
-- **[SEARCHABLE_CAPABILITIES.md](./SEARCHABLE_CAPABILITIES.md)** - MCP Tools and A2A Skills reference
 
 ## 🤝 Contributing
 
