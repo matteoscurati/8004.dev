@@ -12,6 +12,9 @@
 	let name = $state('');
 	let mcpToolsInput = $state('');
 	let a2aSkillsInput = $state('');
+	let supportedTrustInput = $state('');
+	let mcpOnly = $state(false);
+	let a2aOnly = $state(false);
 	let activeOnly = $state(false);
 	let x402Only = $state(false);
 	let filtersExpanded = $state(false);
@@ -21,6 +24,9 @@
 		if (initialFilters.name) name = initialFilters.name;
 		if (initialFilters.mcpTools) mcpToolsInput = initialFilters.mcpTools.join(', ');
 		if (initialFilters.a2aSkills) a2aSkillsInput = initialFilters.a2aSkills.join(', ');
+		if (initialFilters.supportedTrust) supportedTrustInput = initialFilters.supportedTrust.join(', ');
+		if (initialFilters.mcp) mcpOnly = true;
+		if (initialFilters.a2a) a2aOnly = true;
 		if (initialFilters.active) activeOnly = true;
 		if (initialFilters.x402support) x402Only = true;
 
@@ -28,6 +34,9 @@
 		if (
 			initialFilters.mcpTools?.length ||
 			initialFilters.a2aSkills?.length ||
+			initialFilters.supportedTrust?.length ||
+			initialFilters.mcp ||
+			initialFilters.a2a ||
 			initialFilters.active ||
 			initialFilters.x402support
 		) {
@@ -45,6 +54,11 @@
 		if (a2aSkillsInput.trim()) {
 			filters.a2aSkills = a2aSkillsInput.split(',').map((s) => s.trim()).filter(Boolean);
 		}
+		if (supportedTrustInput.trim()) {
+			filters.supportedTrust = supportedTrustInput.split(',').map((t) => t.trim()).filter(Boolean);
+		}
+		if (mcpOnly) filters.mcp = true;
+		if (a2aOnly) filters.a2a = true;
 		if (activeOnly) filters.active = true;
 		if (x402Only) filters.x402support = true;
 
@@ -63,6 +77,9 @@
 		return (
 			mcpToolsInput.trim() !== '' ||
 			a2aSkillsInput.trim() !== '' ||
+			supportedTrustInput.trim() !== '' ||
+			mcpOnly ||
+			a2aOnly ||
 			activeOnly ||
 			x402Only
 		);
@@ -72,6 +89,9 @@
 		name = '';
 		mcpToolsInput = '';
 		a2aSkillsInput = '';
+		supportedTrustInput = '';
+		mcpOnly = false;
+		a2aOnly = false;
 		activeOnly = false;
 		x402Only = false;
 		onSearch({});
@@ -152,7 +172,32 @@
 			<span class="help-text">Comma-separated. Examples: python, code-generation, data-analysis</span>
 		</div>
 
+		<div class="filter-group">
+			<label for="supportedTrust">Trust Models:</label>
+			<input
+				id="supportedTrust"
+				type="text"
+				class="pixel-input"
+				bind:value={supportedTrustInput}
+				placeholder="e.g. reputation, crypto-economic..."
+				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+			<span class="help-text">Comma-separated. Examples: reputation, crypto-economic</span>
+		</div>
+
 		<div class="filter-checkboxes">
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={mcpOnly} />
+				<span class="checkbox-custom"></span>
+				<span>MCP Enabled Only</span>
+			</label>
+
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={a2aOnly} />
+				<span class="checkbox-custom"></span>
+				<span>A2A Enabled Only</span>
+			</label>
+
 			<label class="checkbox-label">
 				<input type="checkbox" bind:checked={activeOnly} />
 				<span class="checkbox-custom"></span>

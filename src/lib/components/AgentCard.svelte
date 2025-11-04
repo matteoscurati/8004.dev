@@ -126,10 +126,27 @@
 		<span class="status-badge {agent.active ? 'active' : 'inactive'}">
 			{agent.active ? '● ACTIVE' : '○ INACTIVE'}
 		</span>
+		{#if agent.mcp}
+			<span class="status-badge protocol-mcp">MCP</span>
+		{/if}
+		{#if agent.a2a}
+			<span class="status-badge protocol-a2a">A2A</span>
+		{/if}
 		{#if agent.x402support}
-			<span class="status-badge x402">x402 ENABLED</span>
+			<span class="status-badge x402">x402</span>
 		{/if}
 	</div>
+
+	{#if agent.supportedTrusts && agent.supportedTrusts.length > 0}
+		<div class="trust-section">
+			<h4>Trust Models:</h4>
+			<div class="tags">
+				{#each agent.supportedTrusts as trust}
+					<span class="tag trust-tag">{trust}</span>
+				{/each}
+			</div>
+		</div>
+	{/if}
 
 	<!-- Reputation temporarily disabled - SDK contract method not available on Sepolia -->
 	<!-- <ReputationDisplay agentId={agent.id} /> -->
@@ -248,5 +265,32 @@
 		border-color: var(--color-accent);
 		color: var(--color-accent);
 		background-color: rgba(255, 0, 255, 0.1);
+	}
+
+	.status-badge.protocol-mcp {
+		border-color: #00d4ff;
+		color: #00d4ff;
+		background-color: rgba(0, 212, 255, 0.1);
+	}
+
+	.status-badge.protocol-a2a {
+		border-color: #ff9500;
+		color: #ff9500;
+		background-color: rgba(255, 149, 0, 0.1);
+	}
+
+	.trust-section {
+		margin-top: calc(var(--spacing-unit));
+	}
+
+	.trust-section h4 {
+		font-size: 9px;
+		margin-bottom: calc(var(--spacing-unit) / 2);
+		color: var(--color-text);
+	}
+
+	.trust-tag {
+		border-color: #ffdd00;
+		color: #ffdd00;
 	}
 </style>

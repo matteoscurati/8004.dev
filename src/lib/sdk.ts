@@ -38,10 +38,16 @@ export function getSDK(): SDK {
 
 export interface SearchFilters {
     name?: string;
+    // Protocol filters
+    mcp?: boolean;              // Filter for MCP-enabled agents
+    a2a?: boolean;              // Filter for A2A-enabled agents
     mcpTools?: string[];
     a2aSkills?: string[];
+    // Status filters
     active?: boolean;
     x402support?: boolean;
+    // Trust filters
+    supportedTrust?: string[];  // e.g., ["reputation"]
 }
 
 export interface AgentResult {
@@ -49,10 +55,25 @@ export interface AgentResult {
     name: string;
     description?: string;
     imageUrl?: string;
+    // Capabilities
+    mcp?: boolean;              // MCP protocol enabled
+    a2a?: boolean;              // A2A protocol enabled
     mcpTools?: string[];
     a2aSkills?: string[];
+    mcpPrompts?: string[];
+    mcpResources?: string[];
+    // Status
     active?: boolean;
     x402support?: boolean;
+    // Trust & Governance
+    supportedTrusts?: string[];  // e.g., ["reputation", "crypto-economic"]
+    owners?: string[];
+    operators?: string[];
+    // Blockchain
+    chainId?: number;
+    walletAddress?: string;
+    // Metadata
+    extras?: Record<string, any>;
 }
 
 export interface ReputationSummary {
@@ -118,10 +139,25 @@ export async function searchAgents(
                 name: agent.name,
                 description: agent.description,
                 imageUrl: agent.image,
+                // Capabilities
+                mcp: agent.mcp,
+                a2a: agent.a2a,
                 mcpTools: agent.mcpTools,
                 a2aSkills: agent.a2aSkills,
+                mcpPrompts: agent.mcpPrompts,
+                mcpResources: agent.mcpResources,
+                // Status
                 active: agent.active,
-                x402support: agent.x402support
+                x402support: agent.x402support,
+                // Trust & Governance
+                supportedTrusts: agent.supportedTrusts,
+                owners: agent.owners,
+                operators: agent.operators,
+                // Blockchain
+                chainId: agent.chainId,
+                walletAddress: agent.walletAddress,
+                // Metadata
+                extras: agent.extras
             }));
 
             allItems.push(...mappedItems);
@@ -154,10 +190,25 @@ export async function searchAgents(
         name: agent.name,
         description: agent.description,
         imageUrl: agent.image,
+        // Capabilities
+        mcp: agent.mcp,
+        a2a: agent.a2a,
         mcpTools: agent.mcpTools,
         a2aSkills: agent.a2aSkills,
+        mcpPrompts: agent.mcpPrompts,
+        mcpResources: agent.mcpResources,
+        // Status
         active: agent.active,
-        x402support: agent.x402support
+        x402support: agent.x402support,
+        // Trust & Governance
+        supportedTrusts: agent.supportedTrusts,
+        owners: agent.owners,
+        operators: agent.operators,
+        // Blockchain
+        chainId: agent.chainId,
+        walletAddress: agent.walletAddress,
+        // Metadata
+        extras: agent.extras
     }));
 
     return {

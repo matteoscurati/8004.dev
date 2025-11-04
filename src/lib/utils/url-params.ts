@@ -27,6 +27,16 @@ export function parseFiltersFromURL(searchParams: URLSearchParams): SearchFilter
 			.filter(Boolean);
 	}
 
+	const supportedTrust = searchParams.get('supportedTrust');
+	if (supportedTrust) {
+		filters.supportedTrust = supportedTrust
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+	}
+
+	if (searchParams.get('mcp') === 'true') filters.mcp = true;
+	if (searchParams.get('a2a') === 'true') filters.a2a = true;
 	if (searchParams.get('active') === 'true') filters.active = true;
 	if (searchParams.get('x402') === 'true') filters.x402support = true;
 
@@ -48,6 +58,11 @@ export function filtersToURLString(filters: SearchFilters): string {
 	if (filters.a2aSkills && filters.a2aSkills.length > 0) {
 		params.set('a2aSkills', filters.a2aSkills.join(','));
 	}
+	if (filters.supportedTrust && filters.supportedTrust.length > 0) {
+		params.set('supportedTrust', filters.supportedTrust.join(','));
+	}
+	if (filters.mcp) params.set('mcp', 'true');
+	if (filters.a2a) params.set('a2a', 'true');
 	if (filters.active) params.set('active', 'true');
 	if (filters.x402support) params.set('x402', 'true');
 
