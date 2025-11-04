@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { AgentResult } from '$lib/sdk';
+	import CapabilityBadge from './CapabilityBadge.svelte';
 	// import ReputationDisplay from './ReputationDisplay.svelte';
 
 	interface Props {
@@ -104,7 +105,7 @@
 				<h4>MCP Tools:</h4>
 				<div class="tags">
 					{#each agent.mcpTools as tool}
-						<span class="tag mcp-tag">{tool}</span>
+						<CapabilityBadge capability={tool} type="mcp" />
 					{/each}
 				</div>
 			</div>
@@ -115,7 +116,7 @@
 				<h4>A2A Skills:</h4>
 				<div class="tags">
 					{#each agent.a2aSkills as skill}
-						<span class="tag a2a-tag">{skill}</span>
+						<CapabilityBadge capability={skill} type="a2a" />
 					{/each}
 				</div>
 			</div>
@@ -224,16 +225,6 @@
 		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
 		border: 2px solid;
 		background-color: var(--color-bg);
-	}
-
-	.mcp-tag {
-		border-color: var(--color-text);
-		color: var(--color-text);
-	}
-
-	.a2a-tag {
-		border-color: var(--color-accent);
-		color: var(--color-accent);
 	}
 
 	.agent-status {
