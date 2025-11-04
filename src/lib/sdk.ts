@@ -12,11 +12,10 @@ import { LRUCache } from '$lib/utils/cache';
 
 let sdkInstance: SDK | null = null;
 
-// Cache for search results (5 minute TTL, max 50 entries)
+// Cache for search results (max 50 entries, 5 minute TTL)
+// IMPORTANT: When returning cached data, always create NEW object references
+// for Svelte 5 reactivity to detect changes
 const searchCache = new LRUCache<SearchResult>(50, 5);
-
-// Cache for count results (5 minute TTL, max 30 entries)
-const countCache = new LRUCache<number>(30, 5);
 
 export function getSDK(): SDK {
     if (!browser) {
@@ -97,14 +96,6 @@ export interface SearchResult {
 
 // Count total agents matching filters (lightweight, returns only count)
 export async function countAgents(filters: SearchFilters): Promise<number> {
-    // Check cache first
-    const cacheKey = LRUCache.hashKey({ type: 'count', filters });
-    const cached = countCache.get(cacheKey);
-
-    if (cached !== null) {
-        return cached;
-    }
-
     const sdk = getSDK();
 
     // IMPORTANT: Array filters and name filter must be handled client-side:
@@ -164,9 +155,6 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
         cursor = result.nextCursor;
     }
 
-    // Cache the result
-    countCache.set(cacheKey, count);
-
     return count;
 }
 
@@ -175,15 +163,36 @@ export async function searchAgents(
     pageSize: number = 50,
     cursor?: string
 ): Promise<SearchResult> {
-    // Check cache first (include cursor in cache key for pagination)
-    const cacheKey = LRUCache.hashKey({ type: 'search', filters, pageSize, cursor });
-    const cached = searchCache.get(cacheKey);
-
-    if (cached !== null) {
-        return cached;
-    }
-
     const sdk = getSDK();
+
+    // Generate cache key for initial page requests only (not for pagination)
+    // Pagination with cursor should always fetch fresh data
+    const cacheKey = !cursor ? LRUCache.hashKey({ filters, pageSize }) : null;
+
+    // Check cache for initial requests (Svelte 5 compatible)
+    if (cacheKey) {
+        const cached = searchCache.get(cacheKey);
+        if (cached !== null) {
+            // CRITICAL: Return NEW object references for Svelte 5 reactivity
+            // Svelte 5 uses Proxy objects and detects changes via reference equality
+            // Deep clone all nested arrays and objects to ensure reactivity works
+            return {
+                items: cached.items.map(item => ({
+                    ...item,
+                    mcpTools: item.mcpTools ? [...item.mcpTools] : undefined,
+                    a2aSkills: item.a2aSkills ? [...item.a2aSkills] : undefined,
+                    mcpPrompts: item.mcpPrompts ? [...item.mcpPrompts] : undefined,
+                    mcpResources: item.mcpResources ? [...item.mcpResources] : undefined,
+                    supportedTrusts: item.supportedTrusts ? [...item.supportedTrusts] : undefined,
+                    owners: item.owners ? [...item.owners] : undefined,
+                    operators: item.operators ? [...item.operators] : undefined,
+                    extras: item.extras ? { ...item.extras } : undefined
+                })),
+                nextCursor: cached.nextCursor,
+                totalMatches: cached.totalMatches
+            };
+        }
+    }
 
     // IMPORTANT: Array filters (mcpTools, a2aSkills, supportedTrust) and name filter require special handling:
     // - The subgraph doesn't support name filtering at GraphQL query level
@@ -204,6 +213,8 @@ export async function searchAgents(
     delete sdkFilters.supportedTrust;
 
     // Helper function to map SDK agent to our AgentResult interface
+    // IMPORTANT: Always create NEW object references for Svelte 5 reactivity
+    // Svelte 5 uses Proxy objects and needs to detect changes via new references
     const mapAgent = (agent: any): AgentResult => ({
         id: agent.agentId,
         name: agent.name,
@@ -211,18 +222,18 @@ export async function searchAgents(
         imageUrl: agent.image,
         mcp: agent.mcp,
         a2a: agent.a2a,
-        mcpTools: agent.mcpTools,
-        a2aSkills: agent.a2aSkills,
-        mcpPrompts: agent.mcpPrompts,
-        mcpResources: agent.mcpResources,
+        mcpTools: agent.mcpTools ? [...agent.mcpTools] : undefined,
+        a2aSkills: agent.a2aSkills ? [...agent.a2aSkills] : undefined,
+        mcpPrompts: agent.mcpPrompts ? [...agent.mcpPrompts] : undefined,
+        mcpResources: agent.mcpResources ? [...agent.mcpResources] : undefined,
         active: agent.active,
         x402support: agent.x402support,
-        supportedTrusts: agent.supportedTrusts,
-        owners: agent.owners,
-        operators: agent.operators,
+        supportedTrusts: agent.supportedTrusts ? [...agent.supportedTrusts] : undefined,
+        owners: agent.owners ? [...agent.owners] : undefined,
+        operators: agent.operators ? [...agent.operators] : undefined,
         chainId: agent.chainId,
         walletAddress: agent.walletAddress,
-        extras: agent.extras
+        extras: agent.extras ? { ...agent.extras } : undefined
     });
 
     // Determine if we need to fetch multiple pages for client-side filtering
@@ -251,30 +262,38 @@ export async function searchAgents(
             if (!nextCursor) break;
         }
 
-        // Cache and return all results without pagination
+        // Return all results without pagination
+        // Always return NEW array reference for Svelte 5 reactivity
         const result = {
-            items: allItems,
+            items: [...allItems],
             nextCursor: undefined,
             totalMatches: allItems.length
         };
 
-        searchCache.set(cacheKey, result);
+        // Cache the result for subsequent searches
+        if (cacheKey) {
+            searchCache.set(cacheKey, result);
+        }
+
         return result;
     }
 
     // Normal flow without client-side filters - standard pagination
-    const sdkResult = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
-    const items = sdkResult.items.map(mapAgent);
+    const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+    const items = result.items.map(mapAgent);
 
-    const result = {
-        items,
-        nextCursor: sdkResult.nextCursor
+    // Always return NEW array reference for Svelte 5 reactivity
+    const searchResult = {
+        items: [...items],
+        nextCursor: result.nextCursor
     };
 
-    // Cache the result
-    searchCache.set(cacheKey, result);
+    // Cache the result for initial page requests (not pagination)
+    if (cacheKey) {
+        searchCache.set(cacheKey, searchResult);
+    }
 
-    return result;
+    return searchResult;
 }
 
 export async function getAgentReputation(agentId: string): Promise<ReputationSummary> {
