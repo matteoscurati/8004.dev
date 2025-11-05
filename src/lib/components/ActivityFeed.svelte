@@ -4,121 +4,27 @@
 </script>
 
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import { blockchainEventListener } from '$lib/services/blockchain-events';
+	import { onMount } from 'svelte';
 	import type { ActivityEvent } from '$lib/services/activity-tracker';
-	import { ActivityStorage } from '$lib/utils/activity-storage';
-	import { soundPlayer } from '$lib/utils/sound';
 	import PixelIcon from './PixelIcon.svelte';
 
 	let events = $state<ActivityEvent[]>([]);
-	let unsubscribe: (() => void) | null = null;
 	let isTracking = $state(false);
-	let soundEnabled = $state(soundPlayer.isEnabled());
+	let soundEnabled = $state(false);
 	let collapsed = $state(false);
-	let isLoadingHistory = $state(false);
 
 	function toggleCollapse() {
 		collapsed = !collapsed;
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		// Prevent multiple mounts
 		if (isActivityFeedMounted) {
 			console.warn('ActivityFeed already mounted, skipping');
 			return;
 		}
 		isActivityFeedMounted = true;
-		console.log('ActivityFeed mounting for the first time');
-		// Load persisted events from storage first
-		const storedEvents = ActivityStorage.loadEvents();
-		if (storedEvents.length > 0) {
-			events = storedEvents;
-		}
-
-		// Fetch historical events from blockchain with progressive updates
-		// Skip if RPC is blocked (Safari Lockdown Mode, network issues, etc.)
-		let blockchainAvailable = true;
-		try {
-			isLoadingHistory = true;
-
-			const historicalEvents = await blockchainEventListener.fetchHistoricalEvents(
-				undefined,
-				'latest',
-				// Progressive update callback
-				(progressEvents) => {
-					// Merge with stored events, remove duplicates
-					const allEvents = [...progressEvents, ...storedEvents];
-					const uniqueEvents = Array.from(
-						new Map(
-							allEvents.map(e => [`${e.agentId}-${e.type}-${e.timestamp}`, e])
-						).values()
-					);
-					uniqueEvents.sort((a, b) => b.timestamp - a.timestamp);
-
-					// Update UI with progressive results
-					events = uniqueEvents;
-				}
-			);
-
-			// Final merge with stored events, remove duplicates, sort by timestamp
-			const allEvents = [...historicalEvents, ...storedEvents];
-			const uniqueEvents = Array.from(
-				new Map(
-					allEvents.map(e => [`${e.agentId}-${e.type}-${e.timestamp}`, e])
-				).values()
-			);
-			uniqueEvents.sort((a, b) => b.timestamp - a.timestamp);
-
-			events = uniqueEvents;
-
-			// Persist to storage
-			ActivityStorage.saveEvents(events);
-		} catch (error) {
-			// Network/RPC blocked (Safari Lockdown Mode, etc.)
-			// Use only stored events, don't retry
-			blockchainAvailable = false;
-			console.error('Failed to fetch historical events:', error);
-		} finally {
-			isLoadingHistory = false;
-		}
-
-		// Only subscribe and start listener if blockchain is available
-		if (blockchainAvailable) {
-			// Subscribe to new real-time events
-			unsubscribe = blockchainEventListener.subscribe((newEvents) => {
-				// Prepend new events (newest first)
-				events = [...newEvents, ...events];
-
-				// Play sound notification for each new event (skip if sound unavailable)
-				try {
-					for (const event of newEvents) {
-						soundPlayer.playEventNotification(event);
-					}
-				} catch (error) {
-					// Sound not available (Safari Lockdown Mode, etc.)
-					// Continue without sound
-				}
-
-				// Persist to storage
-				ActivityStorage.saveEvents(events);
-			});
-
-			// Start listening for new events
-			try {
-				await blockchainEventListener.start();
-				isTracking = blockchainEventListener.isActive();
-			} catch (error) {
-				console.error('Failed to start blockchain event listener:', error);
-			}
-		}
-	});
-
-	onDestroy(() => {
-		if (unsubscribe) {
-			unsubscribe();
-		}
-		blockchainEventListener.stop();
+		console.log('ActivityFeed mounting - waiting for new API service');
 	});
 
 	function getEventIconType(type: ActivityEvent['type']): 'robot' | 'lightning' | 'refresh' | 'dollar' | 'dot' {
@@ -177,15 +83,11 @@
 	}
 
 	function clearHistory() {
-		if (confirm('Clear all activity history?')) {
-			ActivityStorage.clearEvents();
-			events = [];
-		}
+		// Disabled - waiting for new API service
 	}
 
 	function toggleSound() {
-		soundPlayer.toggle();
-		soundEnabled = soundPlayer.isEnabled();
+		// Disabled - waiting for new API service
 	}
 </script>
 
@@ -215,44 +117,14 @@
 
 	{#if !collapsed}
 	<div class="feed-content">
-		{#if isLoadingHistory && events.length === 0}
-			<div class="loading-feed">
-				<div class="pixel-spinner-small"></div>
-				<p>LOADING BLOCKCHAIN EVENTS...</p>
-			</div>
-		{:else if events.length === 0}
-			<div class="empty-feed">
-				<p>NO ACTIVITY YET</p>
-				<p class="hint">Activity will appear as agents are added or updated on the network</p>
-			</div>
-		{:else}
-			<div class="event-list">
-				{#each events as event (event.timestamp + event.agentId + event.type)}
-					<div class="event-item">
-						<div class="event-icon"><PixelIcon type={getEventIconType(event.type)} size={16} /></div>
-						<div class="event-content">
-							<div class="event-header">
-								<span class="event-type">{getEventLabel(event)}</span>
-								<span class="event-time">{formatTimestamp(event.timestamp)}</span>
-							</div>
-							<div class="event-agent">{event.agentName}</div>
-							{#if getEventDetail(event)}
-								<div class="event-detail">{getEventDetail(event)}</div>
-							{/if}
-						</div>
-					</div>
-				{/each}
-			</div>
-		{/if}
+		<div class="empty-feed">
+			<p>ACTIVITY FEED TEMPORARILY DISABLED</p>
+			<p class="hint">Building alternative API service for activity tracking</p>
+		</div>
 	</div>
 
 	<div class="feed-footer">
-		<span class="event-count">{events.length} event{events.length !== 1 ? 's' : ''}</span>
-		{#if isLoadingHistory && events.length > 0}
-			<span class="loading-more">
-				<span class="dot-pulse">●</span> Loading more...
-			</span>
-		{/if}
+		<span class="event-count">0 events</span>
 	</div>
 	{/if}
 </div>
