@@ -6,6 +6,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { searchAgents, type AgentResult } from '$lib/sdk';
+	import PixelIcon from './PixelIcon.svelte';
 
 	let loading = $state(true);
 	let stats = $state({
@@ -64,31 +65,31 @@
 	{:else}
 		<div class="stats-grid">
 			<div class="stat-card pixel-card">
-				<div class="stat-icon">📊</div>
+				<div class="stat-icon"><PixelIcon type="chart" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.total)}</div>
 				<div class="stat-label">TOTAL AGENTS</div>
 			</div>
 
 			<div class="stat-card pixel-card">
-				<div class="stat-icon">✅</div>
+				<div class="stat-icon"><PixelIcon type="check" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.active)}</div>
 				<div class="stat-label">ACTIVE</div>
 			</div>
 
 			<div class="stat-card pixel-card">
-				<div class="stat-icon">🔧</div>
+				<div class="stat-icon"><PixelIcon type="tool" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withMcp)}</div>
 				<div class="stat-label">MCP PROTOCOL</div>
 			</div>
 
 			<div class="stat-card pixel-card">
-				<div class="stat-icon">🤝</div>
+				<div class="stat-icon"><PixelIcon type="handshake" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withA2a)}</div>
 				<div class="stat-label">A2A PROTOCOL</div>
 			</div>
 
 			<div class="stat-card pixel-card">
-				<div class="stat-icon">💳</div>
+				<div class="stat-icon"><PixelIcon type="dollar" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withX402)}</div>
 				<div class="stat-label">PAYMENT READY</div>
 			</div>
@@ -148,9 +149,11 @@
 	}
 
 	.stat-icon {
-		font-size: 32px;
 		margin-bottom: calc(var(--spacing-unit));
 		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.stat-value {
@@ -191,9 +194,6 @@
 			padding: calc(var(--spacing-unit) * 2);
 		}
 
-		.stat-icon {
-			font-size: 24px;
-		}
 
 		.stat-value {
 			font-size: 20px;

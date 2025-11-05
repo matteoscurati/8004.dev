@@ -3,6 +3,21 @@
 	import MusicPlayer from '$lib/components/MusicPlayer.svelte';
 
 	let { children } = $props();
+
+	// Detect Safari Lockdown Mode synchronously (before rendering)
+	let isLockdownMode = $state(false);
+
+	// Run detection immediately during script evaluation
+	if (typeof window !== 'undefined') {
+		try {
+			const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+			if (!AudioContextClass) {
+				isLockdownMode = true;
+			}
+		} catch (e) {
+			isLockdownMode = true;
+		}
+	}
 </script>
 
 <div class="scanlines"></div>
@@ -23,8 +38,10 @@
 	</footer>
 </div>
 
-<!-- Floating 8-bit Music Player -->
-<MusicPlayer />
+<!-- Floating 8-bit Music Player (disabled in Safari Lockdown Mode) -->
+{#if !isLockdownMode}
+	<MusicPlayer />
+{/if}
 
 <style>
 	.layout {

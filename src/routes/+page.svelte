@@ -11,6 +11,7 @@
 	import ActivityFeed from '$lib/components/ActivityFeed.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import AgentCard from '$lib/components/AgentCard.svelte';
+	import PixelIcon from '$lib/components/PixelIcon.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
 	import { parseFiltersFromURL, filtersToURLString } from '$lib/utils/url-params';
 	import type { PageData } from './$types';
@@ -234,7 +235,7 @@
 		</div>
 	{:else}
 		<div class="lockdown-notice pixel-card">
-			<h3>⚠ Limited Mode</h3>
+			<h3><PixelIcon type="warning" size={16} color="#ffaa00" /> Limited Mode</h3>
 			<p>Safari Lockdown Mode detected. Blockchain features are disabled.</p>
 			<p>Search functionality is still available below.</p>
 		</div>
@@ -334,6 +335,10 @@
 		color: #ffaa00;
 		font-size: 14px;
 		margin-bottom: calc(var(--spacing-unit) * 2);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: calc(var(--spacing-unit));
 	}
 
 	.lockdown-notice p {

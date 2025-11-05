@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getCapabilityMetadata, getCategoryColor } from '$lib/data/capabilities-metadata';
 	import type { CapabilityMetadata } from '$lib/data/capabilities-metadata';
+	import PixelIcon from './PixelIcon.svelte';
+	import CapabilityIcon from './CapabilityIcon.svelte';
 
 	interface Props {
 		capability: string;
@@ -14,13 +16,13 @@
 </script>
 
 <div class="capability-badge" style="--category-color: {categoryColor}">
-	<span class="badge-icon">{metadata.icon}</span>
+	<span class="badge-icon"><CapabilityIcon emoji={metadata.icon} size={10} /></span>
 	<span class="badge-text">{capability}</span>
 
 	<!-- Tooltip -->
 	<div class="tooltip pixel-card">
 		<div class="tooltip-header">
-			<span class="tooltip-icon">{metadata.icon}</span>
+			<span class="tooltip-icon"><CapabilityIcon emoji={metadata.icon} size={16} /></span>
 			<strong>{metadata.name}</strong>
 		</div>
 
@@ -50,7 +52,7 @@
 		{#if metadata.docUrl}
 			<div class="tooltip-section">
 				<a href={metadata.docUrl} target="_blank" rel="noopener noreferrer" class="doc-link">
-					📖 View Documentation →
+					<PixelIcon type="book" size={12} /> View Documentation →
 				</a>
 			</div>
 		{/if}
@@ -80,9 +82,10 @@
 	}
 
 	.badge-icon {
-		font-size: 10px;
 		line-height: 1;
-		filter: grayscale(0.3);
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.badge-text {
@@ -139,8 +142,9 @@
 	}
 
 	.tooltip-icon {
-		font-size: 16px;
-		filter: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.tooltip-section {

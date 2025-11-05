@@ -9,6 +9,7 @@
 	import type { ActivityEvent } from '$lib/services/activity-tracker';
 	import { ActivityStorage } from '$lib/utils/activity-storage';
 	import { soundPlayer } from '$lib/utils/sound';
+	import PixelIcon from './PixelIcon.svelte';
 
 	let events = $state<ActivityEvent[]>([]);
 	let unsubscribe: (() => void) | null = null;
@@ -120,18 +121,18 @@
 		blockchainEventListener.stop();
 	});
 
-	function getEventIcon(type: ActivityEvent['type']): string {
+	function getEventIconType(type: ActivityEvent['type']): 'robot' | 'lightning' | 'refresh' | 'dollar' | 'dot' {
 		switch (type) {
 			case 'agent_registered':
-				return '🤖';
+				return 'robot';
 			case 'capability_added':
-				return '⚡';
+				return 'lightning';
 			case 'status_changed':
-				return '🔄';
+				return 'refresh';
 			case 'x402_enabled':
-				return '💳';
+				return 'dollar';
 			default:
-				return '•';
+				return 'dot';
 		}
 	}
 
@@ -200,7 +201,7 @@
 				onclick={toggleSound}
 				title={soundEnabled ? 'Disable sound' : 'Enable sound'}
 			>
-				{soundEnabled ? '🔊' : '🔇'}
+				<PixelIcon type={soundEnabled ? 'speaker' : 'mute'} size={12} />
 			</button>
 			<button class="clear-button" onclick={clearHistory} title="Clear history">
 				✕
@@ -228,7 +229,7 @@
 			<div class="event-list">
 				{#each events as event (event.timestamp + event.agentId + event.type)}
 					<div class="event-item">
-						<div class="event-icon">{getEventIcon(event.type)}</div>
+						<div class="event-icon"><PixelIcon type={getEventIconType(event.type)} size={16} /></div>
 						<div class="event-content">
 							<div class="event-header">
 								<span class="event-type">{getEventLabel(event)}</span>
@@ -471,9 +472,11 @@
 	}
 
 	.event-icon {
-		font-size: 16px;
 		flex-shrink: 0;
 		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.event-content {
@@ -550,9 +553,6 @@
 			max-height: 400px;
 		}
 
-		.event-icon {
-			font-size: 16px;
-		}
 
 		.event-type {
 			font-size: 8px;

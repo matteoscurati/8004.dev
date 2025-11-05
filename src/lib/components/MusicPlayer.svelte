@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { ChiptuneSynth } from '$lib/services/chiptune-synth';
+	import PixelIcon from './PixelIcon.svelte';
 
 	let synth: ChiptuneSynth | null = null;
 	let isPlaying = $state(false);
@@ -150,7 +151,7 @@
 {#if isClosed}
 	<!-- Floating button to reopen -->
 	<button class="reopen-button pixel-card" onclick={open} title="Open Music Player">
-		♪
+		<PixelIcon type="music" size={48} />
 	</button>
 {:else}
 	<!-- Draggable player -->
@@ -161,7 +162,7 @@
 	>
 		<!-- Drag handle -->
 		<div class="player-header" onmousedown={handleMouseDown} role="toolbar" aria-label="Music Player Header">
-			<span class="player-title">♪ 8004.PLAYER</span>
+			<span class="player-title"><PixelIcon type="music" size={14} /> 8004.PLAYER</span>
 			<button class="close-btn" onclick={close} title="Close">×</button>
 		</div>
 
@@ -240,6 +241,9 @@
 		font-weight: bold;
 		color: var(--color-text);
 		letter-spacing: 1px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
 	}
 
 	.close-btn {
@@ -426,23 +430,25 @@
 		position: fixed;
 		bottom: 20px;
 		right: 20px;
-		width: 48px;
-		height: 48px;
+		width: 64px;
+		height: 64px;
+		padding: 8px;
 		border: 3px solid var(--color-border);
 		background-color: var(--color-bg);
 		color: var(--color-text);
-		font-size: 20px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
 		z-index: 9998;
 		transition: all 0.2s;
+		box-shadow: 4px 4px 0 var(--color-shadow);
 	}
 
 	.reopen-button:hover {
-		background-color: rgba(0, 255, 65, 0.2);
+		background-color: var(--color-bg);
 		box-shadow: 0 0 16px rgba(0, 255, 65, 0.5);
-		transform: scale(1.1);
+		transform: scale(1.05);
+		border-color: var(--color-text);
 	}
 </style>
