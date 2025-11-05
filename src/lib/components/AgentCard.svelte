@@ -335,25 +335,27 @@
 	}
 
 	.blockchain-section h4 {
-		font-size: 9px;
-		margin-bottom: calc(var(--spacing-unit) / 2);
-		color: var(--color-text-secondary);
+		font-size: 10px;
+		margin-bottom: var(--spacing-unit);
+		color: var(--color-text);
 	}
 
 	.addresses {
 		display: flex;
 		flex-direction: column;
-		gap: calc(var(--spacing-unit) / 2);
+		gap: var(--spacing-unit);
 	}
 
 	.address {
-		font-size: 7px;
+		font-size: 9px;
 		font-family: 'Courier New', monospace;
-		color: var(--color-text-secondary);
-		background-color: rgba(0, 0, 0, 0.3);
-		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
-		border: 1px solid var(--color-border);
+		color: var(--color-text);
+		background-color: rgba(0, 255, 65, 0.05);
+		padding: var(--spacing-unit);
+		border: 2px solid var(--color-border);
 		word-break: break-all;
 		display: block;
+		line-height: 1.4;
+		letter-spacing: 0.3px;
 	}
 </style>
