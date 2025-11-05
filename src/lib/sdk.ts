@@ -67,6 +67,9 @@ export interface SearchFilters {
     x402support?: boolean;
     // Trust filters
     supportedTrust?: string[];  // e.g., ["reputation"]
+    // Blockchain filters (NEW in SDK v0.2.2)
+    owners?: string[];          // Filter by owner wallet address(es)
+    operators?: string[];       // Filter by operator wallet address(es)
 }
 
 export interface AgentResult {

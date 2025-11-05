@@ -36,6 +36,6 @@
 		"vitest": "^4.0.6"
 	},
 	"dependencies": {
-		"agent0-sdk": "^0.2.1"
+		"agent0-sdk": "^0.2.2"
 	}
 }

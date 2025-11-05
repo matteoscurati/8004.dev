@@ -151,6 +151,29 @@
 		</div>
 	{/if}
 
+	<!-- Blockchain information (NEW in SDK v0.2.2) -->
+	{#if agent.owners && agent.owners.length > 0}
+		<div class="blockchain-section">
+			<h4>Owner{agent.owners.length > 1 ? 's' : ''}:</h4>
+			<div class="addresses">
+				{#each agent.owners as owner}
+					<code class="address">{owner}</code>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
+	{#if agent.operators && agent.operators.length > 0}
+		<div class="blockchain-section">
+			<h4>Operator{agent.operators.length > 1 ? 's' : ''}:</h4>
+			<div class="addresses">
+				{#each agent.operators as operator}
+					<code class="address">{operator}</code>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	<!-- Reputation temporarily disabled - SDK contract method not available on Sepolia -->
 	<!-- <ReputationDisplay agentId={agent.id} /> -->
 </div>
@@ -303,5 +326,34 @@
 	.trust-tag {
 		border-color: #ffdd00;
 		color: #ffdd00;
+	}
+
+	.blockchain-section {
+		margin-top: calc(var(--spacing-unit));
+		padding-top: calc(var(--spacing-unit));
+		border-top: 1px solid var(--color-border);
+	}
+
+	.blockchain-section h4 {
+		font-size: 9px;
+		margin-bottom: calc(var(--spacing-unit) / 2);
+		color: var(--color-text-secondary);
+	}
+
+	.addresses {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--spacing-unit) / 2);
+	}
+
+	.address {
+		font-size: 7px;
+		font-family: 'Courier New', monospace;
+		color: var(--color-text-secondary);
+		background-color: rgba(0, 0, 0, 0.3);
+		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+		border: 1px solid var(--color-border);
+		word-break: break-all;
+		display: block;
 	}
 </style>

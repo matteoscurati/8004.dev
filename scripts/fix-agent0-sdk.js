@@ -2,8 +2,16 @@
 
 /**
  * Fix agent0-sdk ES module imports
+ *
  * This script adds .js extensions to all imports in the agent0-sdk package
- * to make them compatible with Node.js ES modules
+ * to make them compatible with Node.js ES modules.
+ *
+ * Why is this needed?
+ * - SDK v0.2.2 includes a postinstall script that runs codegen
+ * - However, graphql-codegen is in devDependencies, not dependencies
+ * - When SDK is installed as a dependency, devDependencies are not installed
+ * - This causes the postinstall to fail, leaving imports without .js extensions
+ * - Our fix ensures ES module compatibility regardless of SDK postinstall success
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';

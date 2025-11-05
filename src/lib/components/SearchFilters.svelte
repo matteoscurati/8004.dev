@@ -13,6 +13,8 @@
 	let mcpToolsInput = $state('');
 	let a2aSkillsInput = $state('');
 	let supportedTrustInput = $state('');
+	let ownersInput = $state('');
+	let operatorsInput = $state('');
 	let mcpOnly = $state(false);
 	let a2aOnly = $state(false);
 	let activeOnly = $state(false);
@@ -25,6 +27,8 @@
 		if (initialFilters.mcpTools) mcpToolsInput = initialFilters.mcpTools.join(', ');
 		if (initialFilters.a2aSkills) a2aSkillsInput = initialFilters.a2aSkills.join(', ');
 		if (initialFilters.supportedTrust) supportedTrustInput = initialFilters.supportedTrust.join(', ');
+		if (initialFilters.owners) ownersInput = initialFilters.owners.join(', ');
+		if (initialFilters.operators) operatorsInput = initialFilters.operators.join(', ');
 		if (initialFilters.mcp) mcpOnly = true;
 		if (initialFilters.a2a) a2aOnly = true;
 		if (initialFilters.active) activeOnly = true;
@@ -35,6 +39,8 @@
 			initialFilters.mcpTools?.length ||
 			initialFilters.a2aSkills?.length ||
 			initialFilters.supportedTrust?.length ||
+			initialFilters.owners?.length ||
+			initialFilters.operators?.length ||
 			initialFilters.mcp ||
 			initialFilters.a2a ||
 			initialFilters.active ||
@@ -57,6 +63,12 @@
 		if (supportedTrustInput.trim()) {
 			filters.supportedTrust = supportedTrustInput.split(',').map((t) => t.trim()).filter(Boolean);
 		}
+		if (ownersInput.trim()) {
+			filters.owners = ownersInput.split(',').map((o) => o.trim()).filter(Boolean);
+		}
+		if (operatorsInput.trim()) {
+			filters.operators = operatorsInput.split(',').map((o) => o.trim()).filter(Boolean);
+		}
 		if (mcpOnly) filters.mcp = true;
 		if (a2aOnly) filters.a2a = true;
 		if (activeOnly) filters.active = true;
@@ -78,6 +90,8 @@
 			mcpToolsInput.trim() !== '' ||
 			a2aSkillsInput.trim() !== '' ||
 			supportedTrustInput.trim() !== '' ||
+			ownersInput.trim() !== '' ||
+			operatorsInput.trim() !== '' ||
 			mcpOnly ||
 			a2aOnly ||
 			activeOnly ||
@@ -90,6 +104,8 @@
 		mcpToolsInput = '';
 		a2aSkillsInput = '';
 		supportedTrustInput = '';
+		ownersInput = '';
+		operatorsInput = '';
 		mcpOnly = false;
 		a2aOnly = false;
 		activeOnly = false;
@@ -184,6 +200,32 @@
 				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
 			/>
 			<span class="help-text">Comma-separated. Examples: reputation, crypto-economic</span>
+		</div>
+
+		<div class="filter-group">
+			<label for="owners">Owner Addresses:</label>
+			<input
+				id="owners"
+				type="text"
+				class="pixel-input"
+				bind:value={ownersInput}
+				placeholder="e.g. 0x123..., 0xabc..."
+				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+			<span class="help-text">Comma-separated. Filter agents by owner wallet address</span>
+		</div>
+
+		<div class="filter-group">
+			<label for="operators">Operator Addresses:</label>
+			<input
+				id="operators"
+				type="text"
+				class="pixel-input"
+				bind:value={operatorsInput}
+				placeholder="e.g. 0x456..., 0xdef..."
+				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+			<span class="help-text">Comma-separated. Filter agents by operator wallet address</span>
 		</div>
 
 		<div class="filter-checkboxes">
