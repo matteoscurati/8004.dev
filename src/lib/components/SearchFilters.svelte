@@ -135,12 +135,12 @@
 <!-- Filters -->
 <div class="filters-section pixel-card">
 	<div class="filters-header">
-		<h2 class="section-title">
-			[ FILTERS ]
+		<div class="filters-title-wrapper">
+			<h2 class="section-title">[ FILTERS ]</h2>
 			{#if hasActiveFilters() && !filtersExpanded}
-				<span class="active-badge">●</span>
+				<span class="active-indicator">ACTIVE</span>
 			{/if}
-		</h2>
+		</div>
 		<button class="toggle-button" onclick={() => (filtersExpanded = !filtersExpanded)}>
 			<span class="toggle-icon">{filtersExpanded ? '▼' : '▶'}</span>
 			<span class="toggle-text">{filtersExpanded ? 'HIDE' : 'SHOW'}</span>
@@ -288,6 +288,34 @@
 		margin-bottom: calc(var(--spacing-unit) * 2);
 	}
 
+	.filters-title-wrapper {
+		display: flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) * 2);
+	}
+
+	.active-indicator {
+		font-size: 8px;
+		color: var(--color-text);
+		background-color: var(--color-primary);
+		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+		border: 2px solid var(--color-primary);
+		animation: pulse 2s infinite;
+		box-shadow: 0 0 10px var(--color-primary);
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+			box-shadow: 0 0 10px var(--color-primary);
+		}
+		50% {
+			opacity: 0.8;
+			box-shadow: 0 0 5px var(--color-primary);
+		}
+	}
+
 	.toggle-button {
 		background: none;
 		border: none;
@@ -303,6 +331,7 @@
 		gap: calc(var(--spacing-unit) / 2);
 		line-height: 1;
 		vertical-align: middle;
+		flex-shrink: 0;
 	}
 
 	.toggle-button:hover {
@@ -317,22 +346,6 @@
 
 	.toggle-text {
 		display: inline-block;
-	}
-
-	.active-badge {
-		color: var(--color-primary);
-		margin-left: calc(var(--spacing-unit) * 2);
-		animation: pulse 2s infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
 	}
 
 	.search-input-wrapper {
