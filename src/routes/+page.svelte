@@ -94,7 +94,17 @@
 			}
 			nextCursor = result.nextCursor;
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to search agents';
+			// Detect specific error types for better user feedback
+			const errorMessage = e instanceof Error ? e.message : 'Failed to search agents';
+
+			if (errorMessage.includes('bad indexers') || errorMessage.includes('indexer not available')) {
+				error = 'The Graph indexer is temporarily unavailable. This is a temporary infrastructure issue. Please try again in a few minutes.';
+			} else if (errorMessage.includes('subgraph')) {
+				error = 'Unable to connect to the agent registry. Please check your internet connection and try again.';
+			} else {
+				error = errorMessage;
+			}
+
 			console.error('Search error:', e);
 		} finally {
 			loading = false;
@@ -255,11 +265,33 @@
 		</div>
 	{:else if error}
 		<div class="error-container pixel-card">
-			<h3>⚠ ERROR</h3>
-			<p>{error}</p>
-			<p class="error-hint">
-				Make sure you have configured the .env file with a valid RPC URL.
-			</p>
+			<h3><PixelIcon type="warning" size={16} color="#ff4444" /> ERROR</h3>
+			<p class="error-message">{error}</p>
+			{#if error.includes('indexer')}
+				<div class="error-details">
+					<p class="error-hint">
+						<strong>What does this mean?</strong><br/>
+						The Graph Network uses decentralized indexers to provide data. Sometimes an indexer may be temporarily unavailable.
+					</p>
+					<p class="error-hint">
+						<strong>What can you do?</strong><br/>
+						• Wait a few minutes and try again<br/>
+						• Refresh the page to potentially connect to a different indexer<br/>
+						• Check <a href="https://status.thegraph.com/" target="_blank" rel="noopener">The Graph status</a> for known issues
+					</p>
+				</div>
+			{:else if error.includes('agent registry') || error.includes('subgraph')}
+				<p class="error-hint">
+					Please check your internet connection and try again. If the problem persists, the service may be temporarily unavailable.
+				</p>
+			{:else}
+				<p class="error-hint">
+					Make sure you have configured the .env file with a valid RPC URL.
+				</p>
+			{/if}
+			<button class="pixel-button retry-button" onclick={() => handleSearch(currentFilters)}>
+				&gt; RETRY
+			</button>
 		</div>
 	{:else if hasSearched}
 		{#if agents.length === 0}
@@ -376,16 +408,56 @@
 		color: #ff4444;
 		font-size: 16px;
 		margin-bottom: calc(var(--spacing-unit) * 2);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: calc(var(--spacing-unit) * 2);
 	}
 
-	.error-container p {
-		font-size: 10px;
-		margin-bottom: calc(var(--spacing-unit));
+	.error-message {
+		font-size: 11px;
+		margin-bottom: calc(var(--spacing-unit) * 2);
+		color: var(--color-text);
+		line-height: 1.6;
+	}
+
+	.error-details {
+		margin-top: calc(var(--spacing-unit) * 2);
+		padding: calc(var(--spacing-unit) * 2);
+		background: rgba(0, 0, 0, 0.3);
+		border: 2px solid var(--color-border);
+		text-align: left;
 	}
 
 	.error-hint {
 		color: var(--color-text-secondary);
-		font-size: 8px;
+		font-size: 9px;
+		line-height: 1.6;
+		margin-bottom: calc(var(--spacing-unit) * 2);
+	}
+
+	.error-hint:last-child {
+		margin-bottom: 0;
+	}
+
+	.error-hint strong {
+		color: var(--color-text);
+		display: block;
+		margin-bottom: calc(var(--spacing-unit) / 2);
+	}
+
+	.error-hint a {
+		color: var(--color-primary);
+		text-decoration: underline;
+	}
+
+	.error-hint a:hover {
+		color: var(--color-text);
+	}
+
+	.retry-button {
+		margin-top: calc(var(--spacing-unit) * 3);
+		min-width: 150px;
 	}
 
 	.no-results {
