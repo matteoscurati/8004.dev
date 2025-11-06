@@ -14,7 +14,17 @@ import { searchAgents, type AgentResult } from '$lib/sdk';
 import { ActivityStorage } from '$lib/utils/activity-storage';
 
 export interface ActivityEvent {
-	type: 'agent_registered' | 'capability_added' | 'status_changed' | 'x402_enabled';
+	id?: string | number; // Unique event identifier (from API or generated)
+	type:
+		| 'agent_registered'
+		| 'agent_updated'
+		| 'capability_added'
+		| 'status_changed'
+		| 'x402_enabled'
+		| 'validation_request'
+		| 'validation_response'
+		| 'feedback_received'
+		| 'metadata_updated';
 	agentId: string;
 	agentName: string;
 	timestamp: number;
@@ -23,6 +33,29 @@ export interface ActivityEvent {
 		capabilityType?: 'mcp' | 'a2a';
 		previousStatus?: boolean;
 		currentStatus?: boolean;
+		// Metadata events
+		key?: string;
+		value?: string;
+		decodedValue?: string;
+		// Validation events
+		requestHash?: string;
+		requestUri?: string;
+		responseUri?: string;
+		validatorAddress?: string;
+		response?: number;
+		// Feedback events
+		score?: number;
+		feedbackUri?: string;
+		client?: string;
+	};
+	// Enriched data from SDK (loaded asynchronously)
+	enriched?: {
+		owner?: string;
+		operator?: string;
+		active?: boolean;
+		x402support?: boolean;
+		mcpTools?: string[];
+		a2aSkills?: string[];
 	};
 }
 

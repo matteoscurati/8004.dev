@@ -4,17 +4,187 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import type { ActivityEvent } from '$lib/services/activity-tracker';
 	import PixelIcon from './PixelIcon.svelte';
+	import { authStore } from '$lib/stores/auth';
+	import { apiClient } from '$lib/api/client';
+	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
+	import { soundPlayer } from '$lib/utils/sound';
+	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
 
 	let events = $state<ActivityEvent[]>([]);
 	let isTracking = $state(false);
 	let soundEnabled = $state(false);
 	let collapsed = $state(false);
+	let errorMessage = $state<string | null>(null);
+	let loadingInitialEvents = $state(false);
+	let pollingInterval: ReturnType<typeof setInterval> | null = null;
+	let lastEventId: number | string | null = null;
+
+	// Event filtering
+	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
+	let activeFilter = $state<EventFilter>('all');
+
+	// Filtered events based on active filter
+	let filteredEvents = $derived(() => {
+		if (activeFilter === 'all') return events;
+
+		return events.filter(event => {
+			switch (activeFilter) {
+				case 'agents':
+					return event.type === 'agent_registered' || event.type === 'agent_updated';
+				case 'capabilities':
+					return event.type === 'capability_added';
+				case 'metadata':
+					return event.type === 'metadata_updated';
+				case 'validation':
+					return event.type === 'validation_request' || event.type === 'validation_response';
+				case 'feedback':
+					return event.type === 'feedback_received';
+				case 'payments':
+					return event.type === 'x402_enabled';
+				default:
+					return true;
+			}
+		});
+	});
 
 	function toggleCollapse() {
 		collapsed = !collapsed;
+	}
+
+	// Enrich events with SDK data
+	async function enrichEvents(events: ActivityEvent[]): Promise<void> {
+		// Extract unique agent IDs
+		const agentIds = [...new Set(events.map(e => e.agentId))];
+
+		// Preload agent data
+		await preloadAgents(agentIds);
+
+		// Enrich each event
+		for (const event of events) {
+			if (!event.enriched) {
+				const enrichedData = await getEnrichedAgentData(event.agentId);
+				if (enrichedData) {
+					event.enriched = {
+						owner: enrichedData.owner,
+						operator: enrichedData.operator,
+						active: enrichedData.active,
+						x402support: enrichedData.x402support,
+						mcpTools: enrichedData.mcpTools,
+						a2aSkills: enrichedData.a2aSkills
+					};
+					// Update name if it was generic
+					if (event.agentName.startsWith('Agent #') || event.agentName.startsWith('0x')) {
+						event.agentName = enrichedData.name;
+					}
+				}
+			}
+		}
+	}
+
+	// Load events from API
+	async function loadEvents(silent: boolean = false) {
+		if (!silent) {
+			loadingInitialEvents = true;
+		}
+		errorMessage = null;
+
+		try {
+			const response = await apiClient.getEvents({ limit: 20 });
+
+			// Convert API events to activity events
+			const activityEvents: ActivityEvent[] = response.events
+				.map(apiEventToActivityEvent)
+				.filter((e): e is ActivityEvent => e !== null);
+
+			// Enrich with SDK data
+			await enrichEvents(activityEvents);
+
+			// Check for new events (silent mode)
+			if (silent && activityEvents.length > 0) {
+				const newestId = activityEvents[0].id;
+				if (lastEventId !== null && newestId !== lastEventId) {
+					// Find only new events
+					const newEvents = activityEvents.filter(e => {
+						const eventId = typeof e.id === 'number' ? e.id : parseInt(String(e.id), 10);
+						const lastId = typeof lastEventId === 'number' ? lastEventId : parseInt(String(lastEventId), 10);
+						return eventId > lastId;
+					});
+
+					if (newEvents.length > 0) {
+						// Add new events to the front silently
+						events = [...newEvents, ...events].slice(0, 50);
+						console.log(`🔔 ${newEvents.length} new event(s) added silently`);
+
+						// Play sound for new events
+						if (soundEnabled) {
+							newEvents.forEach(event => soundPlayer.playEventNotification(event));
+						}
+					}
+				}
+				lastEventId = newestId;
+			} else {
+				// Initial load
+				events = activityEvents;
+				if (activityEvents.length > 0) {
+					lastEventId = activityEvents[0].id || null;
+				}
+				if (!silent) {
+					console.log(`Loaded ${activityEvents.length} events from API`);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to load events:', error);
+			if (!silent) {
+				errorMessage = error instanceof Error ? error.message : 'Failed to load events';
+			}
+		} finally {
+			if (!silent) {
+				loadingInitialEvents = false;
+			}
+		}
+	}
+
+	// Start polling
+	function startPolling() {
+		if (pollingInterval) return;
+
+		console.log('✅ Starting polling mode (refresh every 15s)');
+		isTracking = true;
+
+		pollingInterval = setInterval(async () => {
+			await loadEvents(true); // Silent polling
+		}, 15000); // Poll every 15 seconds
+	}
+
+	// Stop polling
+	function stopPolling() {
+		if (pollingInterval) {
+			clearInterval(pollingInterval);
+			pollingInterval = null;
+		}
+		isTracking = false;
+	}
+
+	// Initialize
+	async function initialize() {
+		try {
+			// Auto-login via server-side proxy
+			console.log('Logging in via server-side proxy...');
+			await authStore.autoLogin();
+
+			// Load initial events
+			await loadEvents(false);
+
+			// Start polling
+			startPolling();
+		} catch (error) {
+			console.error('Failed to initialize activity feed:', error);
+			errorMessage = error instanceof Error ? error.message : 'Failed to connect';
+			isTracking = false;
+		}
 	}
 
 	onMount(() => {
@@ -24,19 +194,34 @@
 			return;
 		}
 		isActivityFeedMounted = true;
-		console.log('ActivityFeed mounting - waiting for new API service');
+		console.log('ActivityFeed mounting with polling mode');
+
+		// Initialize
+		initialize();
 	});
 
-	function getEventIconType(type: ActivityEvent['type']): 'robot' | 'lightning' | 'refresh' | 'dollar' | 'dot' {
+	onDestroy(() => {
+		stopPolling();
+		isActivityFeedMounted = false;
+	});
+
+	function getEventIconType(type: ActivityEvent['type']): 'robot' | 'lightning' | 'refresh' | 'dollar' | 'check' | 'chart' | 'dot' {
 		switch (type) {
 			case 'agent_registered':
 				return 'robot';
-			case 'capability_added':
-				return 'lightning';
+			case 'agent_updated':
+			case 'metadata_updated':
 			case 'status_changed':
 				return 'refresh';
+			case 'capability_added':
+				return 'lightning';
 			case 'x402_enabled':
 				return 'dollar';
+			case 'validation_request':
+			case 'validation_response':
+				return 'check';
+			case 'feedback_received':
+				return 'chart';
 			default:
 				return 'dot';
 		}
@@ -46,6 +231,10 @@
 		switch (event.type) {
 			case 'agent_registered':
 				return 'NEW AGENT REGISTERED';
+			case 'agent_updated':
+				return 'AGENT NAME UPDATED';
+			case 'metadata_updated':
+				return `METADATA: ${(event.metadata?.key || 'UPDATED').toUpperCase()}`;
 			case 'capability_added':
 				return event.metadata?.capabilityType === 'mcp'
 					? 'MCP TOOL ADDED'
@@ -54,16 +243,135 @@
 				return event.metadata?.currentStatus ? 'AGENT ACTIVATED' : 'AGENT DEACTIVATED';
 			case 'x402_enabled':
 				return 'x402 SUPPORT ENABLED';
+			case 'validation_request':
+				return 'VALIDATION REQUESTED';
+			case 'validation_response':
+				return 'VALIDATION RESPONSE';
+			case 'feedback_received':
+				return 'FEEDBACK RECEIVED';
 			default:
 				return 'ACTIVITY';
 		}
 	}
 
 	function getEventDetail(event: ActivityEvent): string | null {
-		if (event.type === 'capability_added' && event.metadata?.capability) {
-			return event.metadata.capability;
+		switch (event.type) {
+			case 'capability_added':
+				if (event.metadata?.capability) {
+					const capType = event.metadata.capabilityType === 'mcp' ? 'MCP Tool' : 'A2A Skill';
+					return `${capType}: ${event.metadata.capability}`;
+				}
+				return null;
+
+			case 'status_changed':
+				const status = event.metadata?.currentStatus ? 'ACTIVE' : 'INACTIVE';
+				const prevStatus = event.metadata?.previousStatus ? 'ACTIVE' : 'INACTIVE';
+				return `Status changed: ${prevStatus} → ${status}`;
+
+			case 'agent_registered':
+				// Show owner if available from enriched data
+				if (event.enriched?.owner) {
+					const shortOwner = `${event.enriched.owner.substring(0, 6)}...${event.enriched.owner.substring(event.enriched.owner.length - 4)}`;
+					return `Owner: ${shortOwner}`;
+				}
+				// Fallback: show agent ID (truncate only if longer than 10 chars)
+			if (event.agentId.length > 10) {
+				return `Agent ID: ${event.agentId.substring(0, 10)}...`;
+			}
+			return `Agent ID: ${event.agentId}`;
+
+			case 'agent_updated':
+				return `New name: ${event.agentName}`;
+
+			case 'metadata_updated':
+				if (event.metadata?.decodedValue) {
+					const val = event.metadata.decodedValue;
+					return val.length > 30 ? `${val.substring(0, 30)}...` : val;
+				}
+				return event.metadata?.key || null;
+
+			case 'validation_request':
+				if (event.metadata?.validatorAddress) {
+					const addr = event.metadata.validatorAddress;
+					return `Validator: ${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+				}
+				return null;
+
+			case 'validation_response':
+				if (event.metadata?.response !== undefined) {
+					return `Score: ${event.metadata.response}`;
+				}
+				return null;
+
+			case 'feedback_received':
+				if (event.metadata?.score !== undefined) {
+					return `Score: ${event.metadata.score}/100`;
+				}
+				return null;
+
+			case 'x402_enabled':
+				return 'Payment support activated';
+
+			default:
+				return null;
 		}
-		return null;
+	}
+
+	// Get event category for filtering
+	function getEventCategory(event: ActivityEvent): EventFilter {
+		switch (event.type) {
+			case 'agent_registered':
+			case 'agent_updated':
+				return 'agents';
+			case 'capability_added':
+				return 'capabilities';
+			case 'metadata_updated':
+				return 'metadata';
+			case 'validation_request':
+			case 'validation_response':
+				return 'validation';
+			case 'feedback_received':
+				return 'feedback';
+			case 'status_changed':
+				return 'agents'; // Status changes sono parte degli agent events
+			case 'x402_enabled':
+				return 'payments';
+			default:
+				return 'all';
+		}
+	}
+
+	// Get event category label
+	function getCategoryLabel(category: EventFilter): string {
+		switch (category) {
+			case 'all': return 'ALL';
+			case 'agents': return 'AGENTS';
+			case 'capabilities': return 'CAPABILITIES';
+			case 'metadata': return 'METADATA';
+			case 'validation': return 'VALIDATION';
+			case 'feedback': return 'FEEDBACK';
+			case 'payments': return 'PAYMENTS';
+			default: return 'ALL';
+		}
+	}
+
+	// Get category icon
+	function getCategoryIcon(category: EventFilter): 'robot' | 'lightning' | 'refresh' | 'check' | 'chart' | 'dollar' | 'dot' {
+		switch (category) {
+			case 'agents': return 'robot';
+			case 'capabilities': return 'lightning';
+			case 'metadata': return 'refresh';
+			case 'validation': return 'check';
+			case 'feedback': return 'chart';
+			case 'payments': return 'dollar';
+			default: return 'dot';
+		}
+	}
+
+	// Get event count by category
+	function getEventCountByCategory(category: EventFilter): number {
+		if (category === 'all') return events.length;
+		return events.filter(e => getEventCategory(e) === category).length;
 	}
 
 	function formatTimestamp(timestamp: number): string {
@@ -83,11 +391,11 @@
 	}
 
 	function clearHistory() {
-		// Disabled - waiting for new API service
+		events = [];
 	}
 
 	function toggleSound() {
-		// Disabled - waiting for new API service
+		soundEnabled = !soundEnabled;
 	}
 </script>
 
@@ -96,7 +404,9 @@
 		<h3>[ LIVE ACTIVITY FEED ]</h3>
 		<div class="feed-controls">
 			{#if isTracking}
-				<span class="tracking-indicator">● TRACKING</span>
+				<span class="tracking-indicator connected">● LIVE</span>
+			{:else}
+				<span class="tracking-indicator disconnected">○ OFFLINE</span>
 			{/if}
 			<button
 				class="sound-button"
@@ -116,15 +426,79 @@
 	</div>
 
 	{#if !collapsed}
+	<!-- Event Filters -->
+	<div class="feed-filters">
+		{#each ['all', 'agents', 'capabilities', 'metadata', 'validation', 'feedback', 'payments'] as filter}
+			<button
+				class="filter-button"
+				class:active={activeFilter === filter}
+				onclick={() => activeFilter = filter as EventFilter}
+				title={getCategoryLabel(filter as EventFilter)}
+			>
+				<PixelIcon
+					type={getCategoryIcon(filter as EventFilter)}
+					size={10}
+					color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
+				/>
+				<span class="filter-label">{getCategoryLabel(filter as EventFilter)}</span>
+				<span class="filter-count">({getEventCountByCategory(filter as EventFilter)})</span>
+			</button>
+		{/each}
+	</div>
+
 	<div class="feed-content">
-		<div class="empty-feed">
-			<p>ACTIVITY FEED TEMPORARILY DISABLED</p>
-			<p class="hint">Building alternative API service for activity tracking</p>
-		</div>
+		{#if loadingInitialEvents}
+			<div class="loading-feed">
+				<div class="pixel-spinner-small"></div>
+				<p>LOADING RECENT EVENTS...</p>
+			</div>
+		{:else if errorMessage}
+			<div class="empty-feed">
+				<p class="error-text">✕ CONNECTION FAILED</p>
+				<p class="hint">{errorMessage}</p>
+				<button class="pixel-button-small" onclick={initialize}>RETRY</button>
+			</div>
+		{:else if events.length === 0}
+			<div class="empty-feed">
+				<p>NO RECENT ACTIVITY</p>
+				<p class="hint">Waiting for new events on the network...</p>
+			</div>
+		{:else if filteredEvents().length === 0}
+			<div class="empty-feed">
+				<p>NO EVENTS IN THIS CATEGORY</p>
+				<p class="hint">Try selecting a different filter</p>
+			</div>
+		{:else}
+			<div class="event-list">
+				{#each filteredEvents() as event (event.id || `${event.timestamp}-${event.agentId}-${event.type}`)}
+					<div class="event-item">
+						<div class="event-icon">
+							<PixelIcon type={getEventIconType(event.type)} size={12} color="var(--color-primary)" />
+						</div>
+						<div class="event-content">
+							<div class="event-header">
+								<span class="event-type">{getEventLabel(event)}</span>
+								<span class="event-time">{formatTimestamp(event.timestamp)}</span>
+							</div>
+							<div class="event-agent">{event.agentName}</div>
+							{#if getEventDetail(event)}
+								<div class="event-detail">{getEventDetail(event)}</div>
+							{/if}
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
 
 	<div class="feed-footer">
-		<span class="event-count">0 events</span>
+		<span class="event-count">
+			{#if activeFilter === 'all'}
+				{events.length} event{events.length !== 1 ? 's' : ''}
+			{:else}
+				{filteredEvents().length} of {events.length} event{events.length !== 1 ? 's' : ''}
+			{/if}
+		</span>
 	</div>
 	{/if}
 </div>
@@ -154,6 +528,75 @@
 		font-size: 12px;
 		color: var(--color-text);
 		margin: 0;
+	}
+
+	/* Event Filters */
+	.feed-filters {
+		display: flex;
+		gap: calc(var(--spacing-unit) * 1);
+		padding: calc(var(--spacing-unit) * 2);
+		border-bottom: 2px solid var(--color-border);
+		background: rgba(0, 0, 0, 0.3);
+		overflow-x: auto;
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-primary) transparent;
+	}
+
+	.feed-filters::-webkit-scrollbar {
+		height: 4px;
+	}
+
+	.feed-filters::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.feed-filters::-webkit-scrollbar-thumb {
+		background: var(--color-primary);
+		border-radius: 2px;
+	}
+
+	.filter-button {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) * 1);
+		padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+		background: rgba(0, 0, 0, 0.5);
+		border: 2px solid var(--color-border);
+		color: var(--color-text-dim);
+		font-family: 'Press Start 2P', monospace;
+		font-size: 8px;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+		line-height: 1;
+	}
+
+	.filter-button:hover {
+		border-color: var(--color-primary);
+		background: rgba(0, 255, 128, 0.1);
+		transform: translateY(-1px);
+	}
+
+	.filter-button.active {
+		border-color: var(--color-primary);
+		background: rgba(0, 255, 128, 0.2);
+		color: var(--color-primary);
+		box-shadow: 0 0 10px rgba(0, 255, 128, 0.3);
+	}
+
+	.filter-label {
+		display: inline-block;
+	}
+
+	.filter-count {
+		display: inline-block;
+		opacity: 0.7;
+		font-size: 7px;
+	}
+
+	.filter-button.active .filter-count {
+		opacity: 1;
+		color: var(--color-primary);
 	}
 
 	.toggle-button {
@@ -195,8 +638,16 @@
 
 	.tracking-indicator {
 		font-size: 8px;
-		color: var(--color-text);
+		letter-spacing: 0.5px;
+	}
+
+	.tracking-indicator.connected {
+		color: var(--color-primary);
 		animation: pulse 2s ease-in-out infinite;
+	}
+
+	.tracking-indicator.disconnected {
+		color: var(--color-text-secondary);
 	}
 
 	@keyframes pulse {
@@ -305,10 +756,34 @@
 		margin: 0;
 	}
 
+	.empty-feed .error-text {
+		color: #ff4444;
+		font-size: 10px;
+	}
+
 	.empty-feed .hint {
 		font-size: 8px;
 		opacity: 0.7;
 		max-width: 250px;
+	}
+
+	.pixel-button-small {
+		margin-top: calc(var(--spacing-unit) * 2);
+		padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+		background: none;
+		border: 2px solid var(--color-border);
+		color: var(--color-text);
+		font-family: 'Press Start 2P', monospace;
+		font-size: 8px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.pixel-button-small:hover {
+		background: var(--color-primary);
+		color: var(--color-bg);
+		border-color: var(--color-primary);
+		box-shadow: 0 0 10px var(--color-primary);
 	}
 
 	.event-list {
@@ -405,18 +880,6 @@
 		font-size: 8px;
 		color: var(--color-text-secondary);
 		letter-spacing: 0.5px;
-	}
-
-	.loading-more {
-		font-size: 7px;
-		color: var(--color-text-secondary);
-		display: flex;
-		align-items: center;
-		gap: calc(var(--spacing-unit) / 2);
-	}
-
-	.dot-pulse {
-		animation: pulse 1.5s ease-in-out infinite;
 	}
 
 	/* Mobile responsive */

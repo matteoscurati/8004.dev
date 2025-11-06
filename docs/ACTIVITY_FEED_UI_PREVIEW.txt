@@ -1,0 +1,142 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║  [ LIVE ACTIVITY FEED ]                          ● LIVE  🔊 ✕ ▼  ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  [• ALL EVENTS (20)]  [🤖 AGENTS (8)]  [⚡ CAPABILITIES (6)]     ║
+║  [🔄 STATUS (4)]  [💵 PAYMENTS (2)]                               ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                              2m ago    ║
+║      Trading Bot Alpha                                            ║
+║      Agent ID: 0xa1b2c3d4e5...                                    ║
+║                                                                   ║
+║  ⚡  MCP TOOL ADDED                                    5m ago    ║
+║      Data Analyzer 3000                                           ║
+║      MCP Tool: filesystem                                         ║
+║                                                                   ║
+║  🔄  AGENT ACTIVATED                                   8m ago    ║
+║      NFT Minter Pro                                               ║
+║      Status changed: INACTIVE → ACTIVE                            ║
+║                                                                   ║
+║  ⚡  A2A SKILL ADDED                                  12m ago    ║
+║      Translation Service                                          ║
+║      A2A Skill: translate                                         ║
+║                                                                   ║
+║  💵  x402 SUPPORT ENABLED                            15m ago    ║
+║      Payment Gateway                                              ║
+║      Payment support activated                                    ║
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                             18m ago    ║
+║      Weather Oracle                                               ║
+║      Agent ID: 0xf9e8d7c6b5...                                    ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  20 events                                                        ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════
+WITH FILTER ACTIVE (e.g., "AGENTS" selected):
+═══════════════════════════════════════════════════════════════════════
+
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║  [ LIVE ACTIVITY FEED ]                          ● LIVE  🔊 ✕ ▼  ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  [• ALL EVENTS (20)]  [🤖 AGENTS (8)] ← ACTIVE (glowing green)   ║
+║  [⚡ CAPABILITIES (6)]  [🔄 STATUS (4)]  [💵 PAYMENTS (2)]        ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                              2m ago    ║
+║      Trading Bot Alpha                                            ║
+║      Agent ID: 0xa1b2c3d4e5...                                    ║
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                             18m ago    ║
+║      Weather Oracle                                               ║
+║      Agent ID: 0xf9e8d7c6b5...                                    ║
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                             32m ago    ║
+║      DeFi Coordinator                                             ║
+║      Agent ID: 0x3b4c5d6e7f...                                    ║
+║                                                                   ║
+║  🤖  NEW AGENT REGISTERED                             45m ago    ║
+║      Social Media Bot                                             ║
+║      Agent ID: 0x8a9b0c1d2e...                                    ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  8 of 20 events                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════
+EVENT DETAIL EXAMPLES
+═══════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────┐
+│ 🤖  NEW AGENT REGISTERED                              just now   │
+│     AI Trading Assistant                                          │
+│     Agent ID: 0x1a2b3c4d5e...                                     │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ ⚡  MCP TOOL ADDED                                      3s ago    │
+│     File Manager Bot                                              │
+│     MCP Tool: filesystem                                          │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ ⚡  A2A SKILL ADDED                                     7s ago    │
+│     Language Wizard                                               │
+│     A2A Skill: translate                                          │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ 🔄  AGENT ACTIVATED                                   12s ago    │
+│     Document Processor                                            │
+│     Status changed: INACTIVE → ACTIVE                             │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ 🔄  AGENT DEACTIVATED                                 20s ago    │
+│     Old Scanner Bot                                               │
+│     Status changed: ACTIVE → INACTIVE                             │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ 💵  x402 SUPPORT ENABLED                              30s ago    │
+│     Payment Gateway Pro                                           │
+│     Payment support activated                                     │
+└───────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════
+FILTER STATES
+═══════════════════════════════════════════════════════════════════════
+
+INACTIVE FILTER:
+[🤖 AGENTS (8)]
+├─ Gray border
+├─ Dark background
+├─ Dimmed icon
+└─ Gray count
+
+ACTIVE FILTER:
+[🤖 AGENTS (8)] ← with green glow
+├─ Green border (var(--color-primary))
+├─ Light green background (rgba(0, 255, 128, 0.2))
+├─ Green icon (var(--color-primary))
+├─ Green count
+└─ Box shadow glow effect
+
+HOVER STATE:
+[🤖 AGENTS (8)] ← slightly lifted
+├─ Green border (var(--color-primary))
+├─ Light green background (rgba(0, 255, 128, 0.1))
+├─ Transform: translateY(-1px)
+└─ Smooth transition (0.2s)
