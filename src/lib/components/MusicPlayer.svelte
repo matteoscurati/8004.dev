@@ -9,12 +9,20 @@
 	let currentTrackName = $state("DE ROSSI'S BIT");
 	let currentTrackId = $state(0);
 
+	// Mobile detection - disable player on mobile
+	let isMobile = $state(false);
+
 	// Draggable state
 	let isDragging = $state(false);
 	let position = $state({ x: 20, y: 20 });
 	let dragOffset = { x: 0, y: 0 };
 
 	onMount(() => {
+		// Check if mobile
+		isMobile = window.innerWidth <= 768;
+
+		// Don't initialize on mobile
+		if (isMobile) return;
 		// Prevent multiple mounts (handled at module level in +layout.svelte)
 		// MusicPlayer should only exist once in layout
 		synth = new ChiptuneSynth();
@@ -130,11 +138,14 @@
 		}
 	});
 
-	// Handle window resize - keep player in viewport
+	// Handle window resize - keep player in viewport and update mobile state
 	$effect(() => {
 		if (typeof window !== 'undefined') {
 			const handleResize = () => {
-				if (!isClosed) {
+				// Update mobile state
+				isMobile = window.innerWidth <= 768;
+
+				if (!isClosed && !isMobile) {
 					clampPosition();
 				}
 			};
@@ -148,12 +159,13 @@
 	});
 </script>
 
-{#if isClosed}
-	<!-- Floating button to reopen -->
-	<button class="reopen-button pixel-card" onclick={open} title="Open Music Player">
-		<PixelIcon type="music" size={48} />
-	</button>
-{:else}
+{#if !isMobile}
+	{#if isClosed}
+		<!-- Floating button to reopen -->
+		<button class="reopen-button pixel-card" onclick={open} title="Open Music Player">
+			<PixelIcon type="music" size={48} />
+		</button>
+	{:else}
 	<!-- Draggable player -->
 	<div
 		class="music-player pixel-card"
@@ -201,6 +213,7 @@
 		<!-- Scanline effect -->
 		<div class="scanline"></div>
 	</div>
+	{/if}
 {/if}
 
 <style>
