@@ -520,7 +520,6 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 0;
-		padding-bottom: calc(var(--spacing-unit) * 2);
 		margin-bottom: calc(var(--spacing-unit) * 2);
 		border-bottom: 3px solid var(--color-border);
 		gap: calc(var(--spacing-unit) * 2);
@@ -547,7 +546,6 @@
 		flex-wrap: nowrap;
 		gap: calc(var(--spacing-unit) * 1);
 		padding: 0;
-		padding-bottom: calc(var(--spacing-unit) * 2);
 		margin-bottom: calc(var(--spacing-unit) * 2);
 		border-bottom: 2px solid var(--color-border);
 		overflow-x: auto;
@@ -921,7 +919,6 @@
 
 		.feed-header {
 			padding: 0;
-			padding-bottom: calc(var(--spacing-unit) * 1.5);
 			margin-bottom: calc(var(--spacing-unit) * 1.5);
 			gap: calc(var(--spacing-unit) * 1);
 		}
@@ -937,7 +934,6 @@
 		/* Filters: icon-only mode on mobile */
 		.feed-filters {
 			padding: 0;
-			padding-bottom: calc(var(--spacing-unit) * 1.2);
 			margin-bottom: calc(var(--spacing-unit) * 1.2);
 			gap: calc(var(--spacing-unit) * 0.8);
 		}
@@ -1033,7 +1029,6 @@
 
 		.feed-filters {
 			padding: 0;
-			padding-bottom: var(--spacing-unit);
 			margin-bottom: var(--spacing-unit);
 			gap: calc(var(--spacing-unit) * 0.6);
 		}
