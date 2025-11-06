@@ -896,7 +896,7 @@
 	/* Mobile responsive */
 	@media (max-width: 768px) {
 		.activity-feed {
-			max-height: 400px;
+			max-height: none;
 		}
 
 		/* Use short title on mobile */
@@ -991,9 +991,10 @@
 
 		/* Fix feed-content height to prevent button jumping */
 		.feed-content {
-			height: 250px;
-			min-height: 250px;
-			max-height: 250px;
+			height: 180px;
+			min-height: 180px;
+			max-height: 180px;
+			padding: calc(var(--spacing-unit) * 1.5);
 		}
 	}
 
@@ -1032,9 +1033,10 @@
 
 		/* Fix feed-content height on small screens */
 		.feed-content {
-			height: 220px;
-			min-height: 220px;
-			max-height: 220px;
+			height: 160px;
+			min-height: 160px;
+			max-height: 160px;
+			padding: var(--spacing-unit);
 		}
 	}
 </style>
