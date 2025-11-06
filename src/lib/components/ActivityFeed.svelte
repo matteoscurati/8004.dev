@@ -432,14 +432,19 @@
 			<button
 				class="filter-button"
 				class:active={activeFilter === filter}
+				class:all-filter={filter === 'all'}
 				onclick={() => activeFilter = filter as EventFilter}
 				title={getCategoryLabel(filter as EventFilter)}
 			>
-				<PixelIcon
-					type={getCategoryIcon(filter as EventFilter)}
-					size={16}
-					color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
-				/>
+				{#if filter === 'all'}
+					<span class="all-text">ALL</span>
+				{:else}
+					<PixelIcon
+						type={getCategoryIcon(filter as EventFilter)}
+						size={16}
+						color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
+					/>
+				{/if}
 				<span class="filter-label">{getCategoryLabel(filter as EventFilter)}</span>
 				<span class="filter-count">({getEventCountByCategory(filter as EventFilter)})</span>
 			</button>
@@ -586,6 +591,14 @@
 		border-color: var(--color-primary);
 		background: rgba(0, 255, 128, 0.1);
 		transform: translateY(-1px);
+	}
+
+	/* "ALL" text styling */
+	.all-text {
+		font-size: 9px;
+		font-weight: bold;
+		letter-spacing: 1px;
+		color: inherit;
 	}
 
 	.filter-button.active {
@@ -941,6 +954,15 @@
 			border: 2px solid var(--color-border);
 		}
 
+		/* "ALL" button can be wider on mobile */
+		.filter-button.all-filter {
+			width: auto;
+			min-width: 48px;
+			padding: 0 calc(var(--spacing-unit) * 1.5);
+		}
+
+		/* Hide labels and counts on mobile (except for ALL which doesn't have an icon) */
+
 		/* Prevent size changes on active state */
 		.filter-button.active {
 			box-shadow: none;
@@ -1017,6 +1039,13 @@
 			width: 28px;
 			height: 28px;
 			min-width: 28px;
+		}
+
+		/* "ALL" button can be wider on small mobile too */
+		.filter-button.all-filter {
+			width: auto;
+			min-width: 44px;
+			padding: 0 calc(var(--spacing-unit) * 1.2);
 		}
 
 		.event-type {
