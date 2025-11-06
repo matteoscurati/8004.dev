@@ -401,7 +401,7 @@
 
 <div class="activity-feed pixel-card">
 	<div class="feed-header">
-		<h3>[ LIVE ACTIVITY FEED ]</h3>
+		<h3><span class="title-full">[ LIVE ACTIVITY FEED ]</span><span class="title-short">[ ACTIVITY ]</span></h3>
 		<div class="feed-controls">
 			{#if isTracking}
 				<span class="tracking-indicator connected">● LIVE</span>
@@ -528,16 +528,27 @@
 		font-size: 12px;
 		color: var(--color-text);
 		margin: 0;
+		white-space: nowrap;
+	}
+
+	.title-short {
+		display: none;
+	}
+
+	.title-full {
+		display: inline;
 	}
 
 	/* Event Filters */
 	.feed-filters {
 		display: flex;
+		flex-wrap: nowrap;
 		gap: calc(var(--spacing-unit) * 1);
 		padding: calc(var(--spacing-unit) * 2);
 		border-bottom: 2px solid var(--color-border);
 		background: rgba(0, 0, 0, 0.3);
 		overflow-x: auto;
+		overflow-y: hidden;
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-primary) transparent;
 	}
@@ -888,25 +899,45 @@
 			max-height: 400px;
 		}
 
+		/* Use short title on mobile */
+		.title-full {
+			display: none;
+		}
+
+		.title-short {
+			display: inline;
+		}
+
+		.feed-header {
+			padding: calc(var(--spacing-unit) * 1.5);
+			gap: calc(var(--spacing-unit) * 1);
+		}
+
 		.feed-header h3 {
-			font-size: 11px;
+			font-size: 9px;
 		}
 
 		.tracking-indicator {
-			font-size: 9px;
+			font-size: 8px;
+		}
+
+		/* Filters: icon-only mode on mobile */
+		.feed-filters {
+			padding: calc(var(--spacing-unit) * 1);
+			gap: calc(var(--spacing-unit) * 0.5);
 		}
 
 		.filter-button {
 			font-size: 9px;
-			padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 1.5);
+			padding: calc(var(--spacing-unit) * 0.8);
+			min-width: auto;
+			flex-shrink: 0;
 		}
 
-		.filter-label {
-			display: inline;
-		}
-
+		/* Hide labels and counts on mobile - show only icons */
+		.filter-label,
 		.filter-count {
-			font-size: 8px;
+			display: none;
 		}
 
 		.event-type {
@@ -941,12 +972,15 @@
 
 	@media (max-width: 480px) {
 		.feed-header h3 {
-			font-size: 10px;
+			font-size: 8px;
+		}
+
+		.tracking-indicator {
+			font-size: 7px;
 		}
 
 		.filter-button {
-			font-size: 8px;
-			padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.2);
+			padding: calc(var(--spacing-unit) * 0.6);
 		}
 
 		.event-type {
