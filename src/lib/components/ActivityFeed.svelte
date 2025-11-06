@@ -284,19 +284,24 @@
 				return `New name: ${event.agentName}`;
 
 			case 'metadata_updated':
-				// Show metadata key, value, and agent ID
+				// Show agent name, ID, metadata key, and value
 				const parts: string[] = [];
 
-				// Add agent ID (truncate if too long)
+				// Add agent name if not generic
+				if (event.agentName && !event.agentName.startsWith('Agent #') && !event.agentName.startsWith('0x')) {
+					parts.push(event.agentName);
+				}
+
+				// Add agent ID in parentheses (truncate if too long)
 				if (event.agentId.length > 10) {
-					parts.push(`Agent #${event.agentId.substring(0, 8)}...`);
+					parts.push(`(#${event.agentId.substring(0, 8)}...)`);
 				} else {
-					parts.push(`Agent #${event.agentId}`);
+					parts.push(`(#${event.agentId})`);
 				}
 
 				// Add metadata key if available
 				if (event.metadata?.key) {
-					parts.push(`${event.metadata.key}:`);
+					parts.push(`• ${event.metadata.key}:`);
 				}
 
 				// Add decoded value if available
