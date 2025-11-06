@@ -902,6 +902,35 @@
 		letter-spacing: 0.5px;
 	}
 
+	/* Icon-only mode for smaller screens */
+	@media (max-width: 1200px) {
+		/* Filters: icon-only mode */
+		.filter-button {
+			padding: 0;
+			min-width: 32px;
+			width: 32px;
+			height: 32px;
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-sizing: border-box;
+		}
+
+		/* "ALL" button can be wider */
+		.filter-button.all-filter {
+			width: auto;
+			min-width: 48px;
+			padding: 0 calc(var(--spacing-unit) * 1.5);
+		}
+
+		/* Hide labels and counts - show only icons */
+		.filter-label,
+		.filter-count {
+			display: none;
+		}
+	}
+
 	/* Mobile responsive */
 	@media (max-width: 768px) {
 		.activity-feed {
@@ -931,7 +960,7 @@
 			font-size: 8px;
 		}
 
-		/* Filters: icon-only mode on mobile */
+		/* Filters: adjust spacing on mobile */
 		.feed-filters {
 			padding: calc(var(--spacing-unit) * 1.2) 0;
 			margin-bottom: calc(var(--spacing-unit) * 1.2);
@@ -940,26 +969,8 @@
 
 		.filter-button {
 			font-size: 9px;
-			padding: 0;
-			min-width: 32px;
-			width: 32px;
-			height: 32px;
-			flex-shrink: 0;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			box-sizing: border-box;
 			border: 2px solid var(--color-border);
 		}
-
-		/* "ALL" button can be wider on mobile */
-		.filter-button.all-filter {
-			width: auto;
-			min-width: 48px;
-			padding: 0 calc(var(--spacing-unit) * 1.5);
-		}
-
-		/* Hide labels and counts on mobile (except for ALL which doesn't have an icon) */
 
 		/* Prevent size changes on active state */
 		.filter-button.active {
@@ -972,12 +983,6 @@
 			transform: none;
 			border-color: var(--color-primary);
 			background: rgba(0, 255, 128, 0.15);
-		}
-
-		/* Hide labels and counts on mobile - show only icons */
-		.filter-label,
-		.filter-count {
-			display: none;
 		}
 
 		.event-type {
