@@ -930,11 +930,23 @@
 		.filter-button {
 			font-size: 9px;
 			padding: calc(var(--spacing-unit) * 1);
-			min-width: auto;
+			min-width: 32px;
+			width: 32px;
+			height: 32px;
 			flex-shrink: 0;
 			display: flex;
 			align-items: center;
 			justify-content: center;
+		}
+
+		/* Prevent size changes on active state */
+		.filter-button.active {
+			box-shadow: none;
+			background: rgba(0, 255, 128, 0.25);
+		}
+
+		.filter-button:hover {
+			transform: none;
 		}
 
 		/* Hide labels and counts on mobile - show only icons */
@@ -989,6 +1001,9 @@
 
 		.filter-button {
 			padding: calc(var(--spacing-unit) * 0.8);
+			width: 28px;
+			height: 28px;
+			min-width: 28px;
 		}
 
 		.event-type {
