@@ -525,7 +525,7 @@
 	}
 
 	.feed-header h3 {
-		font-size: 12px;
+		font-size: 16px;
 		color: var(--color-text);
 		margin: 0;
 		white-space: nowrap;
@@ -546,7 +546,6 @@
 		gap: calc(var(--spacing-unit) * 1);
 		padding: calc(var(--spacing-unit) * 2);
 		border-bottom: 2px solid var(--color-border);
-		background: rgba(0, 0, 0, 0.3);
 		overflow-x: auto;
 		overflow-y: hidden;
 		scrollbar-width: thin;
@@ -922,7 +921,7 @@
 		}
 
 		.feed-header h3 {
-			font-size: 9px;
+			font-size: 12px;
 		}
 
 		.tracking-indicator {
@@ -1017,7 +1016,7 @@
 
 	@media (max-width: 480px) {
 		.feed-header h3 {
-			font-size: 8px;
+			font-size: 11px;
 		}
 
 		.tracking-indicator {
