@@ -988,6 +988,13 @@
 		.empty-feed .hint {
 			font-size: 8px;
 		}
+
+		/* Fix feed-content height to prevent button jumping */
+		.feed-content {
+			height: 250px;
+			min-height: 250px;
+			max-height: 250px;
+		}
 	}
 
 	@media (max-width: 480px) {
@@ -1021,6 +1028,13 @@
 
 		.event-detail {
 			font-size: 7px;
+		}
+
+		/* Fix feed-content height on small screens */
+		.feed-content {
+			height: 220px;
+			min-height: 220px;
+			max-height: 220px;
 		}
 	}
 </style>
