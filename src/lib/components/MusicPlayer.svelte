@@ -272,7 +272,7 @@
 		cursor: pointer;
 		padding: 0;
 		line-height: 1;
-		transition: all 0.2s;
+		transition: none;
 	}
 
 	.close-btn:hover {
@@ -298,13 +298,13 @@
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		transition: all 0.1s; /* Faster transition */
+		transition: none;
 		flex-shrink: 0;
 	}
 
 	.control-btn:active {
 		transform: scale(0.95);
-		transition: transform 0.05s; /* Instant click feedback */
+		transition: none;
 	}
 
 	.control-btn:hover {
@@ -409,7 +409,11 @@
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: none;
+	}
+
+	.nav-btn:active {
+		transform: scale(0.95);
 	}
 
 	.nav-btn:hover {
@@ -454,8 +458,12 @@
 		justify-content: center;
 		cursor: pointer;
 		z-index: 9998;
-		transition: all 0.2s;
+		transition: none;
 		box-shadow: 4px 4px 0 var(--color-shadow);
+	}
+
+	.reopen-button:active {
+		transform: scale(0.95);
 	}
 
 	.reopen-button:hover {
