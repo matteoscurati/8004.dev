@@ -512,11 +512,6 @@
 	.activity-feed {
 		display: flex;
 		flex-direction: column;
-		background: linear-gradient(
-			180deg,
-			rgba(0, 0, 0, 0.8) 0%,
-			rgba(0, 20, 10, 0.8) 100%
-		);
 		transition: all 0.3s ease;
 	}
 
