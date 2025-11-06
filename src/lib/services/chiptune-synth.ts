@@ -39,63 +39,66 @@ export class ChiptuneSynth {
 		659.25  // E5
 	];
 
-	// Three different tracks - simplified and more musical
+	// Three completely different tracks with distinct personalities
 	private readonly tracks: Track[] = [
 		{
 			id: 0,
 			name: "DE ROSSI'S BIT",
-			tempo: 140,
+			tempo: 145,
+			// Upbeat, bouncy Mario-style melody
 			melodyPatterns: [
-				[0, 2, 4, 5, 4, 2, 0, -1],  // C D E G E D C rest
-				[4, 5, 7, 5, 4, 2, 0, -1],  // E G D5 G E D C rest
-				[0, 4, 5, 4, 2, 4, 5, -1],  // C E G E D E G rest
-				[5, 4, 2, 4, 5, 7, 5, -1]   // G E D E G D5 G rest
+				[0, -1, 0, 2, 4, -1, 4, 5],  // C rest C D E rest E G (jump sound!)
+				[5, -1, 4, 2, 4, -1, 5, 7],  // G rest E D E rest G D5 (ascending)
+				[7, 5, 4, 2, 0, 2, 4, -1],   // D5 G E D C D E rest (descending run)
+				[0, 0, 2, 2, 4, 5, 4, 2]     // C C D D E G E D (playful bounce)
 			],
 			bassPatterns: [
-				[0, -1, 0, -1, 0, -1, 2, -1],  // Simple root notes
-				[0, -1, 2, -1, 0, -1, 2, -1]
+				[0, -1, 0, -1, 2, -1, 2, -1],  // Bouncy bass hits
+				[0, -1, 0, 2, 0, -1, 2, -1]     // Walking bass
 			],
 			arpeggioPatterns: [
-				[0, 2, 4, 2],  // C E G E
-				[2, 4, 5, 4]   // D E G E
+				[0, 4, 0, 4],  // Power chord feel C-E-C-E
+				[2, 5, 2, 5]   // D-G-D-G
 			]
 		},
 		{
 			id: 1,
-			name: "AGENT ZERO ANTHEM",
-			tempo: 110,
+			name: "BLOCKCHAIN DREAMS",
+			tempo: 95,
+			// Atmospheric, melodic Zelda-style adventure theme
 			melodyPatterns: [
-				[0, 0, 2, 2, 4, 4, 5, 5],     // Slower, anthem-like
-				[5, 5, 4, 4, 2, 2, 0, 0],
-				[0, 2, 4, 5, 5, 4, 2, 0],
-				[4, 4, 5, 5, 7, 7, 5, 5]
+				[0, 2, 4, 5, 7, 5, 4, 2],      // Peaceful ascending/descending arc
+				[4, 5, 7, 7, 5, 4, 2, 0],      // Hold the high note (dreamy)
+				[0, -1, 2, -1, 4, -1, 5, -1],  // Sparse, mysterious
+				[5, 4, 5, 7, 5, 4, 2, 4]       // Flowing, melodic resolution
 			],
 			bassPatterns: [
-				[0, -1, 0, -1, 2, -1, 2, -1],
-				[0, -1, 0, -1, 2, -1, 0, -1]
+				[0, -1, -1, -1, 2, -1, -1, -1],  // Long, sustained bass notes
+				[0, -1, -1, 2, 0, -1, -1, -1]    // Very sparse, ambient
 			],
 			arpeggioPatterns: [
-				[0, 2, 4, 5],  // Slower arpeggio
-				[2, 4, 5, 4]
+				[0, 2, 4, 5],  // Gentle harp-like arpeggio
+				[2, 4, 5, 7]   // Rising crystal sounds
 			]
 		},
 		{
 			id: 2,
-			name: "ERC-8004 GROOVE",
-			tempo: 160,
+			name: "PIXEL RUSH",
+			tempo: 180,
+			// Fast, intense Mega Man boss battle style
 			melodyPatterns: [
-				[4, 5, 4, 2, 4, 5, 4, 2],     // Fast and groovy
-				[5, 7, 5, 4, 5, 7, 5, 4],
-				[2, 4, 2, 0, 2, 4, 2, 0],
-				[5, 4, 5, 7, 5, 4, 5, 4]
+				[4, 5, 4, 5, 4, 5, 7, 5],      // Rapid fire repeating notes
+				[5, 7, 5, 7, 5, 4, 2, 4],      // Fast alternating pattern
+				[2, 4, 5, 7, 7, 5, 4, 2],      // Quick scale run up and down
+				[5, 5, 7, 7, 5, 5, 4, 4]       // Intense double notes
 			],
 			bassPatterns: [
-				[0, 0, -1, 0, 2, 2, -1, 2],   // More rhythmic
-				[0, 0, -1, 2, 0, 0, -1, 2]
+				[0, 0, 0, 2, 0, 0, 0, 2],   // Driving, relentless bass
+				[0, 2, 0, 2, 0, 2, 0, 2]    // Rapid alternating bass line
 			],
 			arpeggioPatterns: [
-				[0, 4, 5, 4],  // Fast arpeggios
-				[2, 5, 4, 2]
+				[4, 5, 7, 5],  // Fast aggressive arpeggios
+				[5, 7, 4, 7]   // Chaotic energy
 			]
 		}
 	];
