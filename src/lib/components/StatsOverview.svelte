@@ -14,7 +14,10 @@
 		active: 0,
 		withMcp: 0,
 		withA2a: 0,
-		withX402: 0
+		withX402: 0,
+		activeMcp: 0,
+		activeA2a: 0,
+		activeX402: 0
 	});
 
 	onMount(async () => {
@@ -42,7 +45,10 @@
 				active: agents.filter(a => a.active).length,
 				withMcp: agents.filter(a => a.mcp).length,
 				withA2a: agents.filter(a => a.a2a).length,
-				withX402: agents.filter(a => a.x402support).length
+				withX402: agents.filter(a => a.x402support).length,
+				activeMcp: agents.filter(a => a.active && a.mcp).length,
+				activeA2a: agents.filter(a => a.active && a.a2a).length,
+				activeX402: agents.filter(a => a.active && a.x402support).length
 			};
 		} catch (error) {
 			console.error('Failed to load stats:', error);
@@ -78,20 +84,23 @@
 
 			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="tool" size={32} /></div>
-				<div class="stat-value">{formatNumber(stats.withMcp)}</div>
-				<div class="stat-label">MCP PROTOCOL</div>
+				<div class="stat-value">{formatNumber(stats.activeMcp)}</div>
+				<div class="stat-label">ACTIVE MCP PROTOCOL</div>
+				<div class="stat-total">({formatNumber(stats.withMcp)} total)</div>
 			</div>
 
 			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="handshake" size={32} /></div>
-				<div class="stat-value">{formatNumber(stats.withA2a)}</div>
-				<div class="stat-label">A2A PROTOCOL</div>
+				<div class="stat-value">{formatNumber(stats.activeA2a)}</div>
+				<div class="stat-label">ACTIVE A2A PROTOCOL</div>
+				<div class="stat-total">({formatNumber(stats.withA2a)} total)</div>
 			</div>
 
 			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="dollar" size={32} /></div>
-				<div class="stat-value">{formatNumber(stats.withX402)}</div>
-				<div class="stat-label">PAYMENT READY</div>
+				<div class="stat-value">{formatNumber(stats.activeX402)}</div>
+				<div class="stat-label">ACTIVE PAYMENT READY</div>
+				<div class="stat-total">({formatNumber(stats.withX402)} total)</div>
 			</div>
 		</div>
 	{/if}
@@ -181,6 +190,13 @@
 		color: var(--color-text-secondary);
 		letter-spacing: 1px;
 		font-weight: bold;
+	}
+
+	.stat-total {
+		font-size: 8px;
+		color: var(--color-text-secondary);
+		margin-top: calc(var(--spacing-unit) / 2);
+		opacity: 1;
 	}
 
 	/* Mobile responsive - show only 2 main stats */
