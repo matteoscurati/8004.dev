@@ -76,19 +76,19 @@
 				<div class="stat-label">ACTIVE</div>
 			</div>
 
-			<div class="stat-card pixel-card">
+			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="tool" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withMcp)}</div>
 				<div class="stat-label">MCP PROTOCOL</div>
 			</div>
 
-			<div class="stat-card pixel-card">
+			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="handshake" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withA2a)}</div>
 				<div class="stat-label">A2A PROTOCOL</div>
 			</div>
 
-			<div class="stat-card pixel-card">
+			<div class="stat-card pixel-card hide-mobile">
 				<div class="stat-icon"><PixelIcon type="dollar" size={32} /></div>
 				<div class="stat-value">{formatNumber(stats.withX402)}</div>
 				<div class="stat-label">PAYMENT READY</div>
@@ -183,38 +183,20 @@
 		font-weight: bold;
 	}
 
-	/* Mobile responsive */
+	/* Mobile responsive - show only 2 main stats */
 	@media (max-width: 768px) {
 		.stats-overview {
-			margin-bottom: calc(var(--spacing-unit) * 3);
+			margin-bottom: calc(var(--spacing-unit) * 2);
+		}
+
+		/* Hide extra stats on mobile */
+		.hide-mobile {
+			display: none;
 		}
 
 		.stats-grid {
 			grid-template-columns: repeat(2, 1fr);
 			gap: calc(var(--spacing-unit) * 1.5);
-		}
-
-		.stat-card {
-			padding: calc(var(--spacing-unit) * 2);
-		}
-
-		.stat-value {
-			font-size: 22px;
-		}
-
-		.stat-label {
-			font-size: 9px;
-		}
-
-		.loading p {
-			font-size: 9px;
-		}
-	}
-
-	@media (max-width: 480px) {
-		.stats-grid {
-			grid-template-columns: 1fr;
-			gap: var(--spacing-unit);
 		}
 
 		.stat-card {
@@ -231,6 +213,37 @@
 
 		.stat-label {
 			font-size: 8px;
+			line-height: 1.4;
+		}
+
+		.loading p {
+			font-size: 9px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.stats-overview {
+			margin-bottom: calc(var(--spacing-unit) * 2);
+		}
+
+		.stats-grid {
+			gap: calc(var(--spacing-unit) * 1);
+		}
+
+		.stat-card {
+			padding: calc(var(--spacing-unit) * 1.2);
+		}
+
+		.stat-icon {
+			margin-bottom: calc(var(--spacing-unit) / 2);
+		}
+
+		.stat-value {
+			font-size: 18px;
+		}
+
+		.stat-label {
+			font-size: 7px;
 		}
 	}
 </style>
