@@ -284,11 +284,30 @@
 				return `New name: ${event.agentName}`;
 
 			case 'metadata_updated':
+				// Show metadata key, value, and agent ID
+				const parts: string[] = [];
+
+				// Add agent ID (truncate if too long)
+				if (event.agentId.length > 10) {
+					parts.push(`Agent #${event.agentId.substring(0, 8)}...`);
+				} else {
+					parts.push(`Agent #${event.agentId}`);
+				}
+
+				// Add metadata key if available
+				if (event.metadata?.key) {
+					parts.push(`${event.metadata.key}:`);
+				}
+
+				// Add decoded value if available
 				if (event.metadata?.decodedValue) {
 					const val = event.metadata.decodedValue;
-					return val.length > 30 ? `${val.substring(0, 30)}...` : val;
+					// Truncate long values
+					const displayVal = val.length > 24 ? `${val.substring(0, 24)}...` : val;
+					parts.push(displayVal);
 				}
-				return event.metadata?.key || null;
+
+				return parts.length > 0 ? parts.join(' ') : null;
 
 			case 'validation_request':
 				if (event.metadata?.validatorAddress) {
