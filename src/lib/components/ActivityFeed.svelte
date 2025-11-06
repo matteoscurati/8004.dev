@@ -437,7 +437,7 @@
 			>
 				<PixelIcon
 					type={getCategoryIcon(filter as EventFilter)}
-					size={10}
+					size={16}
 					color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
 				/>
 				<span class="filter-label">{getCategoryLabel(filter as EventFilter)}</span>
@@ -923,15 +923,18 @@
 
 		/* Filters: icon-only mode on mobile */
 		.feed-filters {
-			padding: calc(var(--spacing-unit) * 1);
-			gap: calc(var(--spacing-unit) * 0.5);
+			padding: calc(var(--spacing-unit) * 1.2);
+			gap: calc(var(--spacing-unit) * 0.8);
 		}
 
 		.filter-button {
 			font-size: 9px;
-			padding: calc(var(--spacing-unit) * 0.8);
+			padding: calc(var(--spacing-unit) * 1);
 			min-width: auto;
 			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 		}
 
 		/* Hide labels and counts on mobile - show only icons */
@@ -979,8 +982,13 @@
 			font-size: 7px;
 		}
 
+		.feed-filters {
+			padding: var(--spacing-unit);
+			gap: calc(var(--spacing-unit) * 0.6);
+		}
+
 		.filter-button {
-			padding: calc(var(--spacing-unit) * 0.6);
+			padding: calc(var(--spacing-unit) * 0.8);
 		}
 
 		.event-type {
