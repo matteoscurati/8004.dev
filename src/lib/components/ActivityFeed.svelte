@@ -545,7 +545,7 @@
 		display: flex;
 		flex-wrap: nowrap;
 		gap: calc(var(--spacing-unit) * 1);
-		padding: 0;
+		padding: calc(var(--spacing-unit) * 1.5) 0;
 		margin-bottom: calc(var(--spacing-unit) * 2);
 		border-bottom: 2px solid var(--color-border);
 		overflow-x: auto;
@@ -933,7 +933,7 @@
 
 		/* Filters: icon-only mode on mobile */
 		.feed-filters {
-			padding: 0;
+			padding: calc(var(--spacing-unit) * 1.2) 0;
 			margin-bottom: calc(var(--spacing-unit) * 1.2);
 			gap: calc(var(--spacing-unit) * 0.8);
 		}
@@ -1028,7 +1028,7 @@
 		}
 
 		.feed-filters {
-			padding: 0;
+			padding: var(--spacing-unit) 0;
 			margin-bottom: var(--spacing-unit);
 			gap: calc(var(--spacing-unit) * 0.6);
 		}
