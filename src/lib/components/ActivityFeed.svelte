@@ -929,7 +929,7 @@
 
 		.filter-button {
 			font-size: 9px;
-			padding: calc(var(--spacing-unit) * 1);
+			padding: 0;
 			min-width: 32px;
 			width: 32px;
 			height: 32px;
@@ -937,16 +937,21 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			box-sizing: border-box;
+			border: 2px solid var(--color-border);
 		}
 
 		/* Prevent size changes on active state */
 		.filter-button.active {
 			box-shadow: none;
 			background: rgba(0, 255, 128, 0.25);
+			border-color: var(--color-primary);
 		}
 
 		.filter-button:hover {
 			transform: none;
+			border-color: var(--color-primary);
+			background: rgba(0, 255, 128, 0.15);
 		}
 
 		/* Hide labels and counts on mobile - show only icons */
@@ -1000,7 +1005,7 @@
 		}
 
 		.filter-button {
-			padding: calc(var(--spacing-unit) * 0.8);
+			padding: 0;
 			width: 28px;
 			height: 28px;
 			min-width: 28px;
