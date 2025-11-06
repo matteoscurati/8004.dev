@@ -519,7 +519,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 0;
+		padding: calc(var(--spacing-unit) * 1.5) 0;
 		margin-bottom: calc(var(--spacing-unit) * 2);
 		border-bottom: 3px solid var(--color-border);
 		gap: calc(var(--spacing-unit) * 2);
@@ -706,7 +706,7 @@
 	.feed-content {
 		flex: 1;
 		overflow-y: auto;
-		padding: 0;
+		padding: calc(var(--spacing-unit) * 1.5) 0;
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-border) transparent;
 		min-height: 200px;
@@ -918,7 +918,7 @@
 		}
 
 		.feed-header {
-			padding: 0;
+			padding: calc(var(--spacing-unit) * 1.2) 0;
 			margin-bottom: calc(var(--spacing-unit) * 1.5);
 			gap: calc(var(--spacing-unit) * 1);
 		}
@@ -1014,7 +1014,7 @@
 			height: 180px;
 			min-height: 180px;
 			max-height: 180px;
-			padding: 0;
+			padding: calc(var(--spacing-unit) * 1.2) 0;
 		}
 	}
 
@@ -1064,7 +1064,7 @@
 			height: 160px;
 			min-height: 160px;
 			max-height: 160px;
-			padding: 0;
+			padding: var(--spacing-unit) 0;
 		}
 	}
 </style>
