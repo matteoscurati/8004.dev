@@ -518,6 +518,54 @@
 	@media (max-width: 768px) {
 		.agents-grid {
 			grid-template-columns: 1fr;
+			gap: calc(var(--spacing-unit) * 2);
+		}
+
+		.results-header h2 {
+			font-size: 14px;
+		}
+
+		.pagination-info {
+			font-size: 9px;
+		}
+
+		.error-container h3 {
+			font-size: 14px;
+		}
+
+		.error-message {
+			font-size: 10px;
+		}
+
+		.error-hint {
+			font-size: 9px;
+		}
+
+		.loading-container p {
+			font-size: 10px;
+		}
+
+		.no-results h3 {
+			font-size: 14px;
+		}
+
+		.no-results p {
+			font-size: 9px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.results-header h2 {
+			font-size: 12px;
+		}
+
+		.pagination-info {
+			font-size: 8px;
+		}
+
+		.load-more-button {
+			min-width: 160px;
+			font-size: 10px;
 		}
 	}
 </style>

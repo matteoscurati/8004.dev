@@ -358,4 +358,51 @@
 		line-height: 1.4;
 		letter-spacing: 0.3px;
 	}
+
+	/* Mobile responsiveness */
+	@media (max-width: 768px) {
+		.agent-name {
+			font-size: 13px;
+		}
+
+		.agent-id {
+			font-size: 9px;
+		}
+
+		.agent-description {
+			font-size: 10px;
+			line-height: 1.6;
+		}
+
+		.capability-section h4,
+		.trust-section h4,
+		.blockchain-section h4 {
+			font-size: 10px;
+		}
+
+		.status-badge,
+		.tag {
+			font-size: 9px;
+		}
+
+		.address {
+			font-size: 10px;
+			line-height: 1.5;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.agent-image {
+			width: 56px;
+			height: 56px;
+		}
+
+		.agent-name {
+			font-size: 12px;
+		}
+
+		.agent-description {
+			font-size: 9px;
+		}
+	}
 </style>

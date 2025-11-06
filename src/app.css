@@ -194,15 +194,40 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
 	body {
-		font-size: 10px;
+		font-size: 11px;
 	}
 
 	.pixel-button {
-		font-size: 8px;
-		padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+		font-size: 9px;
+		padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 2);
 	}
 
 	.pixel-input {
-		font-size: 8px;
+		font-size: 9px;
+		padding: calc(var(--spacing-unit) * 1.2);
+	}
+
+	.pixel-card {
+		padding: calc(var(--spacing-unit) * 1.5);
+		box-shadow: 4px 4px 0 var(--color-shadow);
+	}
+
+	.pixel-card:hover {
+		box-shadow: 4px 4px 0 var(--color-text-secondary);
+	}
+}
+
+/* Mobile small screens (< 480px) */
+@media (max-width: 480px) {
+	body {
+		font-size: 12px;
+	}
+
+	.pixel-button {
+		font-size: 10px;
+	}
+
+	.pixel-input {
+		font-size: 10px;
 	}
 }

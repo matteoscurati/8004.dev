@@ -101,11 +101,41 @@
 
 	@media (max-width: 768px) {
 		.header h1 {
-			font-size: 20px;
+			font-size: 22px;
+		}
+
+		.tagline {
+			font-size: 9px;
+			line-height: 1.8;
 		}
 
 		.layout {
-			padding: var(--spacing-unit);
+			padding: calc(var(--spacing-unit) * 1.5);
+		}
+
+		.header {
+			margin-bottom: calc(var(--spacing-unit) * 3);
+			padding: calc(var(--spacing-unit) * 2) 0;
+		}
+
+		.footer {
+			font-size: 9px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.header h1 {
+			font-size: 18px;
+			margin-bottom: calc(var(--spacing-unit) * 1.5);
+		}
+
+		.tagline {
+			font-size: 8px;
+		}
+
+		.footer {
+			font-size: 8px;
+			padding: calc(var(--spacing-unit) * 2) 0;
 		}
 	}
 </style>

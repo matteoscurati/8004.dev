@@ -185,6 +185,10 @@
 
 	/* Mobile responsive */
 	@media (max-width: 768px) {
+		.stats-overview {
+			margin-bottom: calc(var(--spacing-unit) * 3);
+		}
+
 		.stats-grid {
 			grid-template-columns: repeat(2, 1fr);
 			gap: calc(var(--spacing-unit) * 1.5);
@@ -194,6 +198,32 @@
 			padding: calc(var(--spacing-unit) * 2);
 		}
 
+		.stat-value {
+			font-size: 22px;
+		}
+
+		.stat-label {
+			font-size: 9px;
+		}
+
+		.loading p {
+			font-size: 9px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.stats-grid {
+			grid-template-columns: 1fr;
+			gap: var(--spacing-unit);
+		}
+
+		.stat-card {
+			padding: calc(var(--spacing-unit) * 1.5);
+		}
+
+		.stat-icon {
+			margin-bottom: calc(var(--spacing-unit) / 2);
+		}
 
 		.stat-value {
 			font-size: 20px;
@@ -201,12 +231,6 @@
 
 		.stat-label {
 			font-size: 8px;
-		}
-	}
-
-	@media (max-width: 480px) {
-		.stats-grid {
-			grid-template-columns: 1fr;
 		}
 	}
 </style>
