@@ -650,7 +650,7 @@
 		justify-content: center;
 		gap: calc(var(--spacing-unit) / 2);
 		line-height: 1;
-		vertical-align: middle;
+		height: 24px; /* Match other controls */
 	}
 
 	.toggle-button:hover {
@@ -675,7 +675,11 @@
 
 	.tracking-indicator {
 		font-size: 8px;
+		font-weight: bold;
 		letter-spacing: 0.5px;
+		display: inline-flex;
+		align-items: center;
+		height: 24px; /* Match button height */
 	}
 
 	.tracking-indicator.connected {
@@ -704,10 +708,15 @@
 		padding: var(--spacing-unit);
 		cursor: pointer;
 		transition: all 0.2s;
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: calc(var(--spacing-unit) / 2);
+		height: 24px; /* Match other controls */
+	}
+
+	.clear-icon {
+		font-size: 10px;
 	}
 
 	.clear-text {
