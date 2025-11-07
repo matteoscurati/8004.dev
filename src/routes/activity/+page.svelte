@@ -99,10 +99,61 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
-	// Filter events by category
+	// Filter events by category (client-side)
 	function setFilter(filter: EventFilter) {
 		activeFilter = filter;
-		// TODO: Implement server-side filtering with event_type parameter
+	}
+
+	// Get filtered events based on active filter
+	const filteredEvents = $derived(() => {
+		if (activeFilter === 'all') {
+			return events;
+		}
+
+		return events.filter(event => {
+			switch (activeFilter) {
+				case 'agents':
+					return event.type === 'agent_registered' || event.type === 'agent_updated';
+				case 'capabilities':
+					return event.type === 'capability_added';
+				case 'metadata':
+					return event.type === 'metadata_updated' || event.type === 'status_changed';
+				case 'validation':
+					return event.type === 'validation_request' || event.type === 'validation_response';
+				case 'feedback':
+					return event.type === 'feedback_received';
+				case 'payments':
+					return event.type === 'x402_enabled';
+				default:
+					return true;
+			}
+		});
+	});
+
+	// Get event count by category
+	function getEventCountByCategory(filter: EventFilter): number {
+		if (filter === 'all') {
+			return events.length;
+		}
+
+		return events.filter(event => {
+			switch (filter) {
+				case 'agents':
+					return event.type === 'agent_registered' || event.type === 'agent_updated';
+				case 'capabilities':
+					return event.type === 'capability_added';
+				case 'metadata':
+					return event.type === 'metadata_updated' || event.type === 'status_changed';
+				case 'validation':
+					return event.type === 'validation_request' || event.type === 'validation_response';
+				case 'feedback':
+					return event.type === 'feedback_received';
+				case 'payments':
+					return event.type === 'x402_enabled';
+				default:
+					return true;
+			}
+		}).length;
 	}
 
 	// Get event type label
@@ -291,7 +342,7 @@
 			class:active={activeFilter === 'all'}
 			onclick={() => setFilter('all')}
 		>
-			ALL
+			ALL <span class="filter-count">({getEventCountByCategory('all')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -299,7 +350,7 @@
 			onclick={() => setFilter('agents')}
 		>
 			<PixelIcon type="robot" size={16} />
-			AGENTS
+			AGENTS <span class="filter-count">({getEventCountByCategory('agents')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -307,7 +358,7 @@
 			onclick={() => setFilter('capabilities')}
 		>
 			<PixelIcon type="lightning" size={16} />
-			CAPABILITIES
+			CAPABILITIES <span class="filter-count">({getEventCountByCategory('capabilities')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -315,7 +366,7 @@
 			onclick={() => setFilter('metadata')}
 		>
 			<PixelIcon type="refresh" size={16} />
-			METADATA
+			METADATA <span class="filter-count">({getEventCountByCategory('metadata')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -323,7 +374,7 @@
 			onclick={() => setFilter('validation')}
 		>
 			<PixelIcon type="check" size={16} />
-			VALIDATION
+			VALIDATION <span class="filter-count">({getEventCountByCategory('validation')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -331,7 +382,7 @@
 			onclick={() => setFilter('feedback')}
 		>
 			<PixelIcon type="chart" size={16} />
-			FEEDBACK
+			FEEDBACK <span class="filter-count">({getEventCountByCategory('feedback')})</span>
 		</button>
 		<button
 			class="filter-btn"
@@ -339,7 +390,7 @@
 			onclick={() => setFilter('payments')}
 		>
 			<PixelIcon type="dollar" size={16} />
-			PAYMENTS
+			PAYMENTS <span class="filter-count">({getEventCountByCategory('payments')})</span>
 		</button>
 	</div>
 
@@ -364,9 +415,15 @@
 				<PixelIcon type="chart" size={64} />
 				<p>NO EVENTS FOUND</p>
 			</div>
+		{:else if filteredEvents.length === 0}
+			<div class="empty-state">
+				<PixelIcon type="chart" size={64} />
+				<p>NO EVENTS IN THIS CATEGORY</p>
+				<p class="hint">Try selecting a different filter</p>
+			</div>
 		{:else}
 			<div class="events-list">
-				{#each events as event (event.id)}
+				{#each filteredEvents as event (event.id)}
 					<div class="event-item pixel-card">
 						<div class="event-icon">
 							<PixelIcon type={getEventIcon(event)} size={24} />
@@ -482,6 +539,17 @@
 		box-shadow: 0 0 12px rgba(0, 255, 65, 0.5);
 	}
 
+	.filter-count {
+		display: inline-block;
+		opacity: 0.7;
+		font-size: 7px;
+		margin-left: 2px;
+	}
+
+	.filter-btn.active .filter-count {
+		opacity: 1;
+	}
+
 	.events-container {
 		min-height: 400px;
 		margin-bottom: calc(var(--spacing-unit) * 4);
@@ -566,6 +634,13 @@
 		font-size: 10px;
 		color: var(--color-text-secondary);
 		letter-spacing: 1px;
+	}
+
+	.hint {
+		font-size: 9px;
+		color: var(--color-text-dim);
+		opacity: 0.7;
+		margin-top: calc(var(--spacing-unit) / 2);
 	}
 
 	.error-message {
