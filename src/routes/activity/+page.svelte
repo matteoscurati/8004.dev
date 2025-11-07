@@ -468,7 +468,7 @@
 	}
 
 	.page-title {
-		font-size: 32px;
+		font-size: 20px;
 		font-weight: bold;
 		color: var(--color-text);
 		display: flex;
@@ -476,7 +476,7 @@
 		justify-content: center;
 		gap: calc(var(--spacing-unit) * 2);
 		margin-bottom: var(--spacing-unit);
-		text-shadow: 3px 3px 0 var(--color-shadow);
+		text-shadow: 2px 2px 0 var(--color-shadow);
 	}
 
 	.page-subtitle {
@@ -524,13 +524,16 @@
 
 	.filter-count {
 		display: inline-block;
-		opacity: 0.7;
-		font-size: 7px;
-		margin-left: 2px;
+		opacity: 0.9;
+		font-size: 8px;
+		margin-left: 3px;
+		font-weight: bold;
+		color: var(--color-primary);
 	}
 
 	.filter-btn.active .filter-count {
 		opacity: 1;
+		color: var(--color-bg);
 	}
 
 	.events-container {
