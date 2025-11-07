@@ -128,6 +128,14 @@
 	function setFilter(filter: EventFilter) {
 		activeFilter = filter;
 		currentPage = 1; // Reset to first page when changing filter
+
+		// If category has 0 events, don't make API call
+		if (filter !== 'all' && stats[filter] === 0) {
+			events = [];
+			totalEvents = 0;
+			return;
+		}
+
 		loadEvents();
 	}
 
