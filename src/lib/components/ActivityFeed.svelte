@@ -479,15 +479,11 @@
 				onclick={() => activeFilter = filter as EventFilter}
 				title={getCategoryLabel(filter as EventFilter)}
 			>
-				{#if filter === 'all'}
-					<span class="all-text">ALL</span>
-				{:else}
-					<PixelIcon
-						type={getCategoryIcon(filter as EventFilter)}
-						size={16}
-						color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
-					/>
-				{/if}
+				<PixelIcon
+					type={getCategoryIcon(filter as EventFilter)}
+					size={16}
+					color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
+				/>
 				<span class="filter-label">{getCategoryLabel(filter as EventFilter)}</span>
 				<span class="filter-count">({getEventCountByCategory(filter as EventFilter)})</span>
 			</button>
@@ -630,14 +626,6 @@
 		border-color: var(--color-primary);
 		background: rgba(0, 255, 128, 0.1);
 		transform: translateY(-1px);
-	}
-
-	/* "ALL" text styling */
-	.all-text {
-		font-size: 9px;
-		font-weight: bold;
-		letter-spacing: 1px;
-		color: inherit;
 	}
 
 	.filter-button.active {
