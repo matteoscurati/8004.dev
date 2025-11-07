@@ -170,86 +170,117 @@
 		}
 	}
 
-	function getEventDetail(event: ActivityEvent): string | null {
+	// Get detailed information lines for an event
+	function getEventDetails(event: ActivityEvent): string[] {
+		const details: string[] = [];
+
 		switch (event.type) {
 			case 'capability_added':
 				if (event.metadata?.capability) {
 					const capType = event.metadata.capabilityType === 'mcp' ? 'MCP Tool' : 'A2A Skill';
-					return `${capType}: ${event.metadata.capability}`;
+					details.push(`${capType}: ${event.metadata.capability}`);
 				}
-				return null;
+				break;
 
 			case 'status_changed':
 				const status = event.metadata?.currentStatus ? 'ACTIVE' : 'INACTIVE';
 				const prevStatus = event.metadata?.previousStatus ? 'ACTIVE' : 'INACTIVE';
-				return `Status changed: ${prevStatus} → ${status}`;
+				details.push(`Status: ${prevStatus} → ${status}`);
+				break;
 
 			case 'agent_registered':
-				if (event.enriched?.owner) {
-					const shortOwner = `${event.enriched.owner.substring(0, 6)}...${event.enriched.owner.substring(event.enriched.owner.length - 4)}`;
-					return `Owner: ${shortOwner}`;
-				}
-				if (event.agentId.length > 10) {
-					return `Agent ID: ${event.agentId.substring(0, 10)}...`;
-				}
-				return `Agent ID: ${event.agentId}`;
-
-			case 'agent_updated':
-				const agentIdShort = event.agentId.length > 10
+				const agentId = event.agentId.length > 10
 					? `#${event.agentId.substring(0, 8)}...`
 					: `#${event.agentId}`;
-				return `${event.agentName} (${agentIdShort})`;
+				details.push(`Agent ID: ${agentId}`);
+				break;
+
+			case 'agent_updated':
+				const updatedId = event.agentId.length > 10
+					? `#${event.agentId.substring(0, 8)}...`
+					: `#${event.agentId}`;
+				details.push(`New name: ${event.agentName}`);
+				details.push(`Agent ID: ${updatedId}`);
+				break;
 
 			case 'metadata_updated':
-				const parts: string[] = [];
-
-				if (event.agentName && !event.agentName.startsWith('Agent #') && !event.agentName.startsWith('0x')) {
-					parts.push(event.agentName);
-				}
-
-				if (event.agentId.length > 10) {
-					parts.push(`(#${event.agentId.substring(0, 8)}...)`);
-				} else {
-					parts.push(`(#${event.agentId})`);
-				}
-
 				if (event.metadata?.key) {
-					parts.push(`• ${event.metadata.key}:`);
+					details.push(`Key: ${event.metadata.key}`);
 				}
-
 				if (event.metadata?.decodedValue) {
 					const val = event.metadata.decodedValue;
-					const displayVal = val.length > 24 ? `${val.substring(0, 24)}...` : val;
-					parts.push(displayVal);
+					const displayVal = val.length > 40 ? `${val.substring(0, 40)}...` : val;
+					details.push(`Value: ${displayVal}`);
 				}
-
-				return parts.length > 0 ? parts.join(' ') : null;
+				break;
 
 			case 'validation_request':
 				if (event.metadata?.validatorAddress) {
 					const addr = event.metadata.validatorAddress;
-					return `Validator: ${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+					details.push(`Validator: ${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`);
 				}
-				return null;
+				break;
 
 			case 'validation_response':
 				if (event.metadata?.response !== undefined) {
-					return `Score: ${event.metadata.response}`;
+					details.push(`Validation Score: ${event.metadata.response}/10`);
 				}
-				return null;
+				if (event.metadata?.tag) {
+					details.push(`Tag: ${event.metadata.tag}`);
+				}
+				break;
 
 			case 'feedback_received':
 				if (event.metadata?.score !== undefined) {
-					return `Score: ${event.metadata.score}/100`;
+					details.push(`Rating: ${event.metadata.score}/100`);
 				}
-				return null;
+				if (event.metadata?.tag1) {
+					details.push(`Tags: ${event.metadata.tag1}${event.metadata.tag2 ? `, ${event.metadata.tag2}` : ''}`);
+				}
+				if (event.metadata?.client) {
+					const client = event.metadata.client;
+					details.push(`Client: ${client.substring(0, 6)}...${client.substring(client.length - 4)}`);
+				}
+				break;
 
 			case 'x402_enabled':
-				return 'Payment support activated';
-
-			default:
-				return null;
+				details.push('Payment support activated');
+				break;
 		}
+
+		// Add common enriched data
+		if (event.enriched) {
+			if (event.enriched.owner) {
+				const owner = event.enriched.owner;
+				details.push(`Owner: ${owner.substring(0, 6)}...${owner.substring(owner.length - 4)}`);
+			}
+			if (event.enriched.operator && event.enriched.operator !== event.enriched.owner) {
+				const operator = event.enriched.operator;
+				details.push(`Operator: ${operator.substring(0, 6)}...${operator.substring(operator.length - 4)}`);
+			}
+			if (event.enriched.active !== undefined) {
+				details.push(`Status: ${event.enriched.active ? 'ACTIVE' : 'INACTIVE'}`);
+			}
+			if (event.enriched.x402support) {
+				details.push('💳 Payment Ready');
+			}
+			if (event.enriched.mcpTools && event.enriched.mcpTools.length > 0) {
+				details.push(`⚡ ${event.enriched.mcpTools.length} MCP Tool${event.enriched.mcpTools.length !== 1 ? 's' : ''}`);
+			}
+			if (event.enriched.a2aSkills && event.enriched.a2aSkills.length > 0) {
+				details.push(`🤖 ${event.enriched.a2aSkills.length} A2A Skill${event.enriched.a2aSkills.length !== 1 ? 's' : ''}`);
+			}
+		}
+
+		// Add blockchain info
+		if (event.blockNumber) {
+			details.push(`Block: ${event.blockNumber.toLocaleString()}`);
+		}
+		if (event.txHash) {
+			details.push(`Tx: ${event.txHash.substring(0, 10)}...${event.txHash.substring(event.txHash.length - 8)}`);
+		}
+
+		return details;
 	}
 
 	function getEventIcon(event: ActivityEvent): 'robot' | 'lightning' | 'refresh' | 'check' | 'chart' | 'dollar' | 'dot' {
@@ -416,9 +447,10 @@
 								<span class="event-type">{getEventTypeLabel(event)}</span>
 								<span class="event-time">{formatTimestamp(event.timestamp)}</span>
 							</div>
-							{#if getEventDetail(event)}
-								<div class="event-detail">{getEventDetail(event)}</div>
-							{/if}
+							<div class="event-agent-name">{event.agentName}</div>
+							{#each getEventDetails(event) as detail}
+								<div class="event-detail">{detail}</div>
+							{/each}
 						</div>
 					</div>
 				{/each}
@@ -594,6 +626,14 @@
 		font-size: 8px;
 		color: var(--color-text-secondary);
 		white-space: nowrap;
+	}
+
+	.event-agent-name {
+		font-size: 10px;
+		color: var(--color-primary);
+		font-weight: bold;
+		margin-bottom: calc(var(--spacing-unit) / 2);
+		word-break: break-word;
 	}
 
 	.event-detail {
