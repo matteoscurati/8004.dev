@@ -8,8 +8,27 @@
 	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
 
+	// Filter state
+	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
+
+	// Read initial state from URL query params
+	function getInitialPage(): number {
+		if (typeof window === 'undefined') return 1;
+		const params = new URLSearchParams(window.location.search);
+		const page = parseInt(params.get('page') || '1', 10);
+		return page > 0 ? page : 1;
+	}
+
+	function getInitialFilter(): EventFilter {
+		if (typeof window === 'undefined') return 'all';
+		const params = new URLSearchParams(window.location.search);
+		const filter = params.get('filter');
+		const validFilters: EventFilter[] = ['all', 'agents', 'capabilities', 'metadata', 'validation', 'feedback', 'payments'];
+		return validFilters.includes(filter as EventFilter) ? (filter as EventFilter) : 'all';
+	}
+
 	// Pagination state
-	let currentPage = $state(1);
+	let currentPage = $state(getInitialPage());
 	let pageSize = $state(20);
 	let totalEvents = $state(0);
 	let totalPages = $derived(Math.ceil(totalEvents / pageSize));
@@ -20,8 +39,7 @@
 	let errorMessage = $state<string | null>(null);
 
 	// Filter state
-	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
-	let activeFilter = $state<EventFilter>('all');
+	let activeFilter = $state<EventFilter>(getInitialFilter());
 
 	// Stats from API
 	let stats = $state<{
@@ -57,15 +75,44 @@
 			});
 
 			// Convert API events to activity events
-			const activityEvents: ActivityEvent[] = response.events
+			let activityEvents: ActivityEvent[] = response.events
 				.map(apiEventToActivityEvent)
 				.filter((e): e is ActivityEvent => e !== null);
+
+			// Additional client-side filter if API returned wrong category
+			// (Some API implementations return all events when category has 0 results)
+			if (activeFilter !== 'all') {
+				const filteredByCategory = activityEvents.filter(event => {
+					switch (activeFilter) {
+						case 'agents':
+							return event.type === 'agent_registered' || event.type === 'agent_updated';
+						case 'capabilities':
+							return event.type === 'capability_added';
+						case 'metadata':
+							return event.type === 'metadata_updated' || event.type === 'status_changed';
+						case 'validation':
+							return event.type === 'validation_request' || event.type === 'validation_response';
+						case 'feedback':
+							return event.type === 'feedback_received';
+						case 'payments':
+							return event.type === 'x402_enabled';
+						default:
+							return true;
+					}
+				});
+
+				// If we filtered out events, it means API returned wrong data
+				if (filteredByCategory.length !== activityEvents.length) {
+					console.warn(`⚠️ API returned ${activityEvents.length} events but only ${filteredByCategory.length} match category '${activeFilter}'`);
+					activityEvents = filteredByCategory;
+				}
+			}
 
 			// Enrich with SDK data
 			await enrichEvents(activityEvents);
 
 			events = activityEvents;
-			totalEvents = response.total;
+			totalEvents = activityEvents.length; // Use filtered count instead of API total
 
 			// Save stats if available
 			if (response.stats) {
@@ -115,10 +162,30 @@
 		}
 	}
 
+	// Update URL with current filter and page state
+	function updateUrl() {
+		const params = new URLSearchParams();
+
+		if (activeFilter !== 'all') {
+			params.set('filter', activeFilter);
+		}
+
+		if (currentPage > 1) {
+			params.set('page', currentPage.toString());
+		}
+
+		const query = params.toString();
+		const newUrl = query ? `/activity?${query}` : '/activity';
+
+		// Update URL without reloading page
+		window.history.replaceState({}, '', newUrl);
+	}
+
 	// Navigate to page
 	function goToPage(page: number) {
 		if (page < 1 || page > totalPages) return;
 		currentPage = page;
+		updateUrl();
 		loadEvents();
 		// Scroll to top
 		window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -128,6 +195,7 @@
 	function setFilter(filter: EventFilter) {
 		activeFilter = filter;
 		currentPage = 1; // Reset to first page when changing filter
+		updateUrl();
 
 		// If category has 0 events, don't make API call
 		if (filter !== 'all' && stats[filter] === 0) {
@@ -258,12 +326,6 @@
 				const operator = event.enriched.operator;
 				details.push(`Operator: ${operator.substring(0, 6)}...${operator.substring(operator.length - 4)}`);
 			}
-			if (event.enriched.active !== undefined) {
-				details.push(`Status: ${event.enriched.active ? 'ACTIVE' : 'INACTIVE'}`);
-			}
-			if (event.enriched.x402support) {
-				details.push('💳 Payment Ready');
-			}
 			if (event.enriched.mcpTools && event.enriched.mcpTools.length > 0) {
 				details.push(`⚡ ${event.enriched.mcpTools.length} MCP Tool${event.enriched.mcpTools.length !== 1 ? 's' : ''}`);
 			}
@@ -276,11 +338,24 @@
 		if (event.blockNumber) {
 			details.push(`Block: ${event.blockNumber.toLocaleString()}`);
 		}
-		if (event.txHash) {
-			details.push(`Tx: ${event.txHash.substring(0, 10)}...${event.txHash.substring(event.txHash.length - 8)}`);
-		}
+		// Note: Transaction hash is shown as a link separately in the template
 
 		return details;
+	}
+
+	// Get Etherscan URL for transaction
+	function getEtherscanUrl(txHash: string, chainId: number = 11155111): string {
+		// For now we only support Sepolia, but we can add more chains later
+		const explorers: Record<number, string> = {
+			1: 'https://etherscan.io',
+			11155111: 'https://sepolia.etherscan.io', // Sepolia
+			// Add more chains as needed:
+			// 137: 'https://polygonscan.com', // Polygon
+			// 8453: 'https://basescan.org', // Base
+		};
+
+		const explorerUrl = explorers[chainId] || explorers[11155111]; // Default to Sepolia
+		return `${explorerUrl}/tx/${txHash}`;
 	}
 
 	function getEventIcon(event: ActivityEvent): 'robot' | 'lightning' | 'refresh' | 'check' | 'chart' | 'dollar' | 'dot' {
@@ -431,7 +506,7 @@
 			</div>
 		{:else if events.length === 0}
 			<div class="empty-state">
-				<PixelIcon type="chart" size={64} />
+				<PixelIcon type="dot" size={64} />
 				<p>NO EVENTS IN THIS CATEGORY</p>
 				<p class="hint">Try selecting a different filter</p>
 			</div>
@@ -451,6 +526,19 @@
 							{#each getEventDetails(event) as detail}
 								<div class="event-detail">{detail}</div>
 							{/each}
+							{#if event.txHash}
+								<div class="event-tx">
+									<a
+										href={getEtherscanUrl(event.txHash)}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="tx-link"
+									>
+										<span class="tx-label">🔗 View on Block Explorer</span>
+										<span class="tx-hash">{event.txHash.substring(0, 10)}...{event.txHash.substring(event.txHash.length - 8)}</span>
+									</a>
+								</div>
+							{/if}
 						</div>
 					</div>
 				{/each}
@@ -533,7 +621,7 @@
 		border: 2px solid var(--color-border);
 		background: var(--color-bg);
 		color: var(--color-text-secondary);
-		font-size: 9px;
+		font-size: 10px;
 		font-weight: bold;
 		letter-spacing: 0.5px;
 		cursor: pointer;
@@ -557,7 +645,7 @@
 	.filter-count {
 		display: inline-block;
 		opacity: 0.9;
-		font-size: 10px;
+		font-size: 11px;
 		margin-left: 4px;
 		font-weight: bold;
 		color: var(--color-primary);
@@ -643,6 +731,47 @@
 		word-break: break-word;
 	}
 
+	.event-tx {
+		margin-top: calc(var(--spacing-unit) * 1);
+		padding-top: calc(var(--spacing-unit) / 2);
+		border-top: 1px solid rgba(0, 255, 65, 0.2);
+	}
+
+	.tx-link {
+		color: var(--color-primary);
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		text-underline-offset: 3px;
+		transition: all 0.2s;
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) / 2);
+		padding: calc(var(--spacing-unit) / 2) 0;
+		font-size: 9px;
+		font-weight: bold;
+		letter-spacing: 0.3px;
+		cursor: pointer;
+	}
+
+	.tx-label {
+		text-transform: uppercase;
+	}
+
+	.tx-hash {
+		opacity: 0.7;
+		font-family: monospace;
+	}
+
+	.tx-link:hover {
+		color: var(--color-text);
+		text-shadow: 0 0 8px var(--color-primary);
+		text-decoration-style: solid;
+	}
+
+	.tx-link:hover .tx-hash {
+		opacity: 1;
+	}
+
 	.loading-state,
 	.error-state,
 	.empty-state {
@@ -723,6 +852,10 @@
 			padding: calc(var(--spacing-unit) * 2) var(--spacing-unit);
 		}
 
+		.page-header {
+			margin-bottom: calc(var(--spacing-unit) * 3);
+		}
+
 		.page-title {
 			font-size: 24px;
 			gap: var(--spacing-unit);
@@ -738,7 +871,11 @@
 
 		.filter-btn {
 			padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
-			font-size: 8px;
+			font-size: 9px;
+		}
+
+		.filter-count {
+			font-size: 10px;
 		}
 
 		.event-item {

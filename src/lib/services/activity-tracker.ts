@@ -28,6 +28,9 @@ export interface ActivityEvent {
 	agentId: string;
 	agentName: string;
 	timestamp: number;
+	// Blockchain data
+	blockNumber?: number;
+	txHash?: string;
 	metadata?: {
 		capability?: string;
 		capabilityType?: 'mcp' | 'a2a';

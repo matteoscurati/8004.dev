@@ -32,6 +32,10 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 	const timestamp = new Date(apiEvent.block_timestamp).getTime();
 	const eventId = apiEvent.id; // Preserve unique API event ID
 
+	// Extract blockchain data
+	const blockNumber = apiEvent.block_number;
+	const txHash = apiEvent.transaction_hash;
+
 	// Extract agent info from event_data
 	const { agent, agentId, agent_id, name, owner, token_uri } = apiEvent.event_data;
 	const eventAgentId = agentId || agent_id || agent || apiEvent.contract_address;
@@ -52,7 +56,9 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				type: 'agent_registered',
 				agentId: eventAgentId,
 				agentName: eventAgentName,
-				timestamp
+				timestamp,
+				blockNumber,
+				txHash
 			};
 
 		case 'MetadataSet': {
@@ -68,6 +74,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 					agentId: eventAgentId,
 					agentName: decodedValue,
 					timestamp,
+					blockNumber,
+					txHash,
 					metadata: {
 						key: 'agentName',
 						value: hexValue,
@@ -83,6 +91,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					key,
 					value: hexValue,
@@ -98,6 +108,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					requestHash: apiEvent.event_data.request_hash,
 					requestUri: apiEvent.event_data.request_uri,
@@ -112,6 +124,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					requestHash: apiEvent.event_data.request_hash,
 					responseUri: apiEvent.event_data.response_uri,
@@ -127,6 +141,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					score: apiEvent.event_data.score,
 					feedbackUri: apiEvent.event_data.feedback_uri,
@@ -147,6 +163,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					capability,
 					capabilityType: capabilityType as 'mcp' | 'a2a'
@@ -162,6 +180,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentId: eventAgentId,
 				agentName: eventAgentName,
 				timestamp,
+				blockNumber,
+				txHash,
 				metadata: {
 					previousStatus: apiEvent.event_data.previousStatus,
 					currentStatus: apiEvent.event_data.currentStatus || apiEvent.event_data.active
@@ -175,8 +195,29 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				type: 'x402_enabled',
 				agentId: eventAgentId,
 				agentName: eventAgentName,
-				timestamp
+				timestamp,
+				blockNumber,
+				txHash
 			};
+
+		case 'UriUpdated':
+		case 'uri_updated': {
+			const uri = apiEvent.event_data.uri || apiEvent.event_data.newUri || apiEvent.event_data.token_uri;
+			return {
+				id: eventId,
+				type: 'metadata_updated',
+				agentId: eventAgentId,
+				agentName: eventAgentName,
+				timestamp,
+				blockNumber,
+				txHash,
+				metadata: {
+					key: 'uri',
+					value: uri,
+					decodedValue: uri
+				}
+			};
+		}
 
 		default:
 			// Unknown event type
