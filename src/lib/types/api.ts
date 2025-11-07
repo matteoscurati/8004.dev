@@ -29,6 +29,15 @@ export interface EventsResponse {
 	total: number;
 	limit: number;
 	offset: number;
+	stats?: {
+		all: number;
+		agents: number;
+		metadata: number;
+		validation: number;
+		feedback: number;
+		capabilities: number;
+		payments: number;
+	};
 }
 
 export interface Stats {

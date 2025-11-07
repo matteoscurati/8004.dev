@@ -191,6 +191,7 @@ class ApiClient {
 		agent_id?: string;
 		contract?: string;
 		event_type?: string;
+		category?: string;
 		from_block?: number;
 		to_block?: number;
 	}): Promise<EventsResponse> {
@@ -205,6 +206,7 @@ class ApiClient {
 		if (params?.agent_id) searchParams.set('agent_id', params.agent_id);
 		if (params?.contract) searchParams.set('contract', params.contract);
 		if (params?.event_type) searchParams.set('event_type', params.event_type);
+		if (params?.category) searchParams.set('category', params.category);
 		if (params?.from_block) searchParams.set('from_block', params.from_block.toString());
 		if (params?.to_block) searchParams.set('to_block', params.to_block.toString());
 

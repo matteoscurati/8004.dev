@@ -23,6 +23,25 @@
 	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
 	let activeFilter = $state<EventFilter>('all');
 
+	// Stats from API
+	let stats = $state<{
+		all: number;
+		agents: number;
+		metadata: number;
+		validation: number;
+		feedback: number;
+		capabilities: number;
+		payments: number;
+	}>({
+		all: 0,
+		agents: 0,
+		metadata: 0,
+		validation: 0,
+		feedback: 0,
+		capabilities: 0,
+		payments: 0
+	});
+
 	// Load events from API
 	async function loadEvents() {
 		loading = true;
@@ -33,7 +52,8 @@
 			const response = await apiClient.getEvents({
 				limit: pageSize,
 				offset,
-				chain_id: 11155111 // Sepolia
+				chain_id: 11155111, // Sepolia
+				category: activeFilter === 'all' ? undefined : activeFilter
 			});
 
 			// Convert API events to activity events
@@ -46,6 +66,11 @@
 
 			events = activityEvents;
 			totalEvents = response.total;
+
+			// Save stats if available
+			if (response.stats) {
+				stats = response.stats;
+			}
 
 			// Log filtering stats
 			const filteredCount = response.events.length - activityEvents.length;
@@ -99,61 +124,16 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
-	// Filter events by category (client-side)
+	// Filter events by category (server-side)
 	function setFilter(filter: EventFilter) {
 		activeFilter = filter;
+		currentPage = 1; // Reset to first page when changing filter
+		loadEvents();
 	}
 
-	// Get filtered events based on active filter
-	const filteredEvents = $derived(() => {
-		if (activeFilter === 'all') {
-			return events;
-		}
-
-		return events.filter(event => {
-			switch (activeFilter) {
-				case 'agents':
-					return event.type === 'agent_registered' || event.type === 'agent_updated';
-				case 'capabilities':
-					return event.type === 'capability_added';
-				case 'metadata':
-					return event.type === 'metadata_updated' || event.type === 'status_changed';
-				case 'validation':
-					return event.type === 'validation_request' || event.type === 'validation_response';
-				case 'feedback':
-					return event.type === 'feedback_received';
-				case 'payments':
-					return event.type === 'x402_enabled';
-				default:
-					return true;
-			}
-		});
-	});
-
-	// Get event count by category
+	// Get event count by category from API stats
 	function getEventCountByCategory(filter: EventFilter): number {
-		if (filter === 'all') {
-			return events.length;
-		}
-
-		return events.filter(event => {
-			switch (filter) {
-				case 'agents':
-					return event.type === 'agent_registered' || event.type === 'agent_updated';
-				case 'capabilities':
-					return event.type === 'capability_added';
-				case 'metadata':
-					return event.type === 'metadata_updated' || event.type === 'status_changed';
-				case 'validation':
-					return event.type === 'validation_request' || event.type === 'validation_response';
-				case 'feedback':
-					return event.type === 'feedback_received';
-				case 'payments':
-					return event.type === 'x402_enabled';
-				default:
-					return true;
-			}
-		}).length;
+		return stats[filter];
 	}
 
 	// Get event type label
@@ -413,17 +393,12 @@
 		{:else if events.length === 0}
 			<div class="empty-state">
 				<PixelIcon type="chart" size={64} />
-				<p>NO EVENTS FOUND</p>
-			</div>
-		{:else if filteredEvents.length === 0}
-			<div class="empty-state">
-				<PixelIcon type="chart" size={64} />
 				<p>NO EVENTS IN THIS CATEGORY</p>
 				<p class="hint">Try selecting a different filter</p>
 			</div>
 		{:else}
 			<div class="events-list">
-				{#each filteredEvents as event (event.id)}
+				{#each events as event (event.id)}
 					<div class="event-item pixel-card">
 						<div class="event-icon">
 							<PixelIcon type={getEventIcon(event)} size={24} />
