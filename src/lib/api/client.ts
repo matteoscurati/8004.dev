@@ -187,6 +187,8 @@ class ApiClient {
 	async getEvents(params?: {
 		limit?: number;
 		offset?: number;
+		chain_id?: number;
+		agent_id?: string;
 		contract?: string;
 		event_type?: string;
 		from_block?: number;
@@ -199,6 +201,8 @@ class ApiClient {
 
 		if (params?.limit) searchParams.set('limit', params.limit.toString());
 		if (params?.offset) searchParams.set('offset', params.offset.toString());
+		if (params?.chain_id) searchParams.set('chain_id', params.chain_id.toString());
+		if (params?.agent_id) searchParams.set('agent_id', params.agent_id);
 		if (params?.contract) searchParams.set('contract', params.contract);
 		if (params?.event_type) searchParams.set('event_type', params.event_type);
 		if (params?.from_block) searchParams.set('from_block', params.from_block.toString());

@@ -92,7 +92,11 @@
 		errorMessage = null;
 
 		try {
-			const response = await apiClient.getEvents({ limit: 100 });
+			// Get events from last 12 hours only (for home page widget)
+			const response = await apiClient.getEvents({
+				limit: 50,
+				chain_id: 11155111 // Sepolia
+			});
 
 			// Convert API events to activity events
 			const activityEvents: ActivityEvent[] = response.events
@@ -105,23 +109,28 @@
 				console.log(`⚠️ Filtered out ${filteredCount} events (${activityEvents.length}/${response.events.length} kept)`);
 			}
 
+			// Filter to last 12 hours (home page widget only)
+			const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+			const recentEvents = activityEvents.filter(e => e.timestamp >= twelveHoursAgo);
+
 			// Enrich with SDK data
-			await enrichEvents(activityEvents);
+			await enrichEvents(recentEvents);
 
 			// Check for new events (silent mode)
-			if (silent && activityEvents.length > 0) {
-				const newestId = activityEvents[0].id;
+			if (silent && recentEvents.length > 0) {
+				const newestId = recentEvents[0].id;
 				if (lastEventId !== null && newestId !== lastEventId) {
 					// Find only new events
-					const newEvents = activityEvents.filter(e => {
+					const newEvents = recentEvents.filter(e => {
 						const eventId = typeof e.id === 'number' ? e.id : parseInt(String(e.id), 10);
 						const lastId = typeof lastEventId === 'number' ? lastEventId : parseInt(String(lastEventId), 10);
 						return eventId > lastId;
 					});
 
 					if (newEvents.length > 0) {
-						// Add new events to the front silently
-						events = [...newEvents, ...events].slice(0, 50);
+						// Add new events to the front silently (keep last 12 hours only)
+						const allEvents = [...newEvents, ...events];
+						events = allEvents.filter(e => e.timestamp >= twelveHoursAgo).slice(0, 50);
 						console.log(`🔔 ${newEvents.length} new event(s) added silently`);
 
 						// Play sound for new events
@@ -133,12 +142,12 @@
 				lastEventId = newestId;
 			} else {
 				// Initial load
-				events = activityEvents;
-				if (activityEvents.length > 0) {
-					lastEventId = activityEvents[0].id || null;
+				events = recentEvents;
+				if (recentEvents.length > 0) {
+					lastEventId = recentEvents[0].id || null;
 				}
 				if (!silent) {
-					console.log(`Loaded ${activityEvents.length} events from API`);
+					console.log(`Loaded ${recentEvents.length} events from last 12 hours (${activityEvents.length} total from API)`);
 				}
 			}
 		} catch (error) {
