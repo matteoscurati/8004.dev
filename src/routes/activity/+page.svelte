@@ -525,8 +525,8 @@
 	.filter-count {
 		display: inline-block;
 		opacity: 0.9;
-		font-size: 8px;
-		margin-left: 3px;
+		font-size: 10px;
+		margin-left: 4px;
 		font-weight: bold;
 		color: var(--color-primary);
 	}
