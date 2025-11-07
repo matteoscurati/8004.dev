@@ -24,7 +24,9 @@
 
 <div class="layout">
 	<header class="header">
-		<h1 class="glitch" data-text="8004 SEARCH">8004 SEARCH</h1>
+		<h1 class="glitch" data-text="8004 SEARCH">
+			<a href="/" class="logo-link">8004 SEARCH</a>
+		</h1>
 		<p class="tagline">// Discover AI Agents on Ethereum • Currently on Sepolia Testnet</p>
 	</header>
 
@@ -64,6 +66,18 @@
 		font-size: 32px;
 		margin-bottom: calc(var(--spacing-unit) * 2);
 		text-shadow: 4px 4px 0 var(--color-shadow);
+	}
+
+	.logo-link {
+		color: var(--color-text);
+		text-decoration: none;
+		transition: all 0.2s;
+		cursor: pointer;
+	}
+
+	.logo-link:hover {
+		color: var(--color-primary);
+		text-shadow: 0 0 20px var(--color-primary), 4px 4px 0 var(--color-shadow);
 	}
 
 	.tagline {
