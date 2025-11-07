@@ -92,12 +92,18 @@
 		errorMessage = null;
 
 		try {
-			const response = await apiClient.getEvents({ limit: 20 });
+			const response = await apiClient.getEvents({ limit: 100 });
 
 			// Convert API events to activity events
 			const activityEvents: ActivityEvent[] = response.events
 				.map(apiEventToActivityEvent)
 				.filter((e): e is ActivityEvent => e !== null);
+
+			// Log filtering stats
+			const filteredCount = response.events.length - activityEvents.length;
+			if (filteredCount > 0) {
+				console.log(`⚠️ Filtered out ${filteredCount} events (${activityEvents.length}/${response.events.length} kept)`);
+			}
 
 			// Enrich with SDK data
 			await enrichEvents(activityEvents);
