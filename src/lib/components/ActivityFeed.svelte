@@ -520,7 +520,7 @@
 	<div class="feed-footer">
 		<span class="event-count">
 			{#if activeFilter === 'all'}
-				{events.length} event{events.length !== 1 ? 's' : ''}
+				Last {events.length} event{events.length !== 1 ? 's' : ''}
 			{:else}
 				{filteredEvents().length} of {events.length} event{events.length !== 1 ? 's' : ''}
 			{/if}
