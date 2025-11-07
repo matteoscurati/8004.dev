@@ -401,6 +401,7 @@
 	// Get category icon
 	function getCategoryIcon(category: EventFilter): 'robot' | 'lightning' | 'refresh' | 'check' | 'chart' | 'dollar' | 'dot' {
 		switch (category) {
+			case 'all': return 'chart'; // Use chart for "all" - more visible than dot
 			case 'agents': return 'robot';
 			case 'capabilities': return 'lightning';
 			case 'metadata': return 'refresh';
