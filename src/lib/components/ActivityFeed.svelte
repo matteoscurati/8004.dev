@@ -281,7 +281,11 @@
 			return `Agent ID: ${event.agentId}`;
 
 			case 'agent_updated':
-				return `New name: ${event.agentName}`;
+				// Show new name with agent ID
+				const agentIdShort = event.agentId.length > 10
+					? `#${event.agentId.substring(0, 8)}...`
+					: `#${event.agentId}`;
+				return `${event.agentName} (${agentIdShort})`;
 
 			case 'metadata_updated':
 				// Show agent name, ID, metadata key, and value
