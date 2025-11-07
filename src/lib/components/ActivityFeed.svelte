@@ -713,7 +713,7 @@
 	}
 
 	.clear-icon {
-		font-size: 10px;
+		font-size: 8px;
 	}
 
 	.clear-text {
