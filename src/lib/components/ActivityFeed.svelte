@@ -525,6 +525,7 @@
 				{filteredEvents().length} of {events.length} event{events.length !== 1 ? 's' : ''}
 			{/if}
 		</span>
+		<a href="/activity" class="view-all-link">VIEW ALL →</a>
 	</div>
 	{/if}
 </div>
@@ -930,6 +931,24 @@
 		font-size: 8px;
 		color: var(--color-text-secondary);
 		letter-spacing: 0.5px;
+	}
+
+	.view-all-link {
+		font-size: 8px;
+		font-weight: bold;
+		color: var(--color-text);
+		text-decoration: none;
+		letter-spacing: 0.5px;
+		padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+		border: 2px solid var(--color-border);
+		background: transparent;
+		transition: all 0.2s;
+	}
+
+	.view-all-link:hover {
+		background: rgba(0, 255, 65, 0.2);
+		border-color: var(--color-text);
+		box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
 	}
 
 	/* Icon-only mode for smaller screens */
