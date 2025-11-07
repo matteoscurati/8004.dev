@@ -658,10 +658,12 @@
 	.toggle-icon {
 		display: inline-block;
 		transform: translateY(-1px);
+		font-size: 8px;
 	}
 
 	.toggle-text {
 		display: inline-block;
+		font-size: 8px;
 	}
 
 	.feed-controls {
