@@ -291,7 +291,6 @@
 			class:active={activeFilter === 'all'}
 			onclick={() => setFilter('all')}
 		>
-			<PixelIcon type="dot" size={16} />
 			ALL
 		</button>
 		<button

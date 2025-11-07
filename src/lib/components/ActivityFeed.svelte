@@ -480,11 +480,13 @@
 				onclick={() => activeFilter = filter as EventFilter}
 				title={getCategoryLabel(filter as EventFilter)}
 			>
-				<PixelIcon
-					type={getCategoryIcon(filter as EventFilter)}
-					size={16}
-					color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
-				/>
+				{#if filter !== 'all'}
+					<PixelIcon
+						type={getCategoryIcon(filter as EventFilter)}
+						size={16}
+						color={activeFilter === filter ? 'var(--color-primary)' : 'var(--color-text-dim)'}
+					/>
+				{/if}
 				<span class="filter-label">{getCategoryLabel(filter as EventFilter)}</span>
 				<span class="filter-count">({getEventCountByCategory(filter as EventFilter)})</span>
 			</button>
