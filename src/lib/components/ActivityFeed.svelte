@@ -10,12 +10,10 @@
 	import { authStore } from '$lib/stores/auth';
 	import { apiClient } from '$lib/api/client';
 	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
-	import { soundPlayer } from '$lib/utils/sound';
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
 
 	let events = $state<ActivityEvent[]>([]);
 	let isTracking = $state(false);
-	let soundEnabled = $state(false);
 	let collapsed = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let loadingInitialEvents = $state(false);
@@ -132,11 +130,6 @@
 						const allEvents = [...newEvents, ...events];
 						events = allEvents.filter(e => e.timestamp >= twelveHoursAgo).slice(0, 50);
 						console.log(`🔔 ${newEvents.length} new event(s) added silently`);
-
-						// Play sound for new events
-						if (soundEnabled) {
-							newEvents.forEach(event => soundPlayer.playEventNotification(event));
-						}
 					}
 				}
 				lastEventId = newestId;
@@ -437,10 +430,6 @@
 	function clearHistory() {
 		events = [];
 	}
-
-	function toggleSound() {
-		soundEnabled = !soundEnabled;
-	}
 </script>
 
 <div class="activity-feed pixel-card">
@@ -452,13 +441,6 @@
 			{:else}
 				<span class="tracking-indicator disconnected">○ OFFLINE</span>
 			{/if}
-			<button
-				class="sound-button"
-				onclick={toggleSound}
-				title={soundEnabled ? 'Disable sound' : 'Enable sound'}
-			>
-				<PixelIcon type={soundEnabled ? 'speaker' : 'mute'} size={12} />
-			</button>
 			<button class="clear-button" onclick={clearHistory} title="Clear history">
 				✕
 			</button>
@@ -713,7 +695,6 @@
 		}
 	}
 
-	.sound-button,
 	.clear-button {
 		background: none;
 		border: none;
@@ -725,11 +706,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-	}
-
-	.sound-button:hover {
-		color: var(--color-text);
-		text-shadow: 0 0 10px var(--color-text);
 	}
 
 	.clear-button:hover {
