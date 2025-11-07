@@ -442,7 +442,8 @@
 				<span class="tracking-indicator disconnected">○ OFFLINE</span>
 			{/if}
 			<button class="clear-button" onclick={clearHistory} title="Clear history">
-				✕
+				<span class="clear-icon">✕</span>
+				<span class="clear-text">CLEAR</span>
 			</button>
 			<button class="toggle-button" onclick={toggleCollapse}>
 				<span class="toggle-icon">{collapsed ? '▶' : '▼'}</span>
@@ -706,11 +707,25 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		gap: calc(var(--spacing-unit) / 2);
+	}
+
+	.clear-text {
+		font-size: 8px;
+		font-weight: bold;
+		letter-spacing: 0.5px;
 	}
 
 	.clear-button:hover {
 		color: #ff4444;
 		text-shadow: 0 0 10px #ff4444;
+	}
+
+	/* Hide label on mobile, show only icon */
+	@media (max-width: 768px) {
+		.clear-text {
+			display: none;
+		}
 	}
 
 	.feed-content {
