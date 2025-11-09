@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { searchAgents, type AgentResult } from '$lib/sdk';
 	import PixelIcon from './PixelIcon.svelte';
 
@@ -29,6 +29,10 @@
 		isStatsOverviewMounted = true;
 		console.log('StatsOverview mounting for the first time');
 		await loadStats();
+	});
+
+	onDestroy(() => {
+		isStatsOverviewMounted = false;
 	});
 
 	async function loadStats() {

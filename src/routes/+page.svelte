@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import StatsOverview from '$lib/components/StatsOverview.svelte';
@@ -150,6 +150,10 @@
 		initialFilters = urlFilters;
 		// Initial search with URL filters (or show all agents if no filters)
 		handleSearch(urlFilters);
+	});
+
+	onDestroy(() => {
+		isPageMounted = false;
 	});
 </script>
 
