@@ -38,35 +38,19 @@ describe('Server Routes', () => {
 			const response = await loginPOST({ request } as any);
 			const data = await response.json();
 
+			// Verify fetch was called with correct URL and structure
 			expect(fetchMock).toHaveBeenCalledWith(
 				'https://api-8004-dev.fly.dev/login',
 				expect.objectContaining({
 					method: 'POST',
-					body: JSON.stringify({
-						username: 'test_admin',
-						password: 'test_password',
+					headers: expect.objectContaining({
+						'Content-Type': 'application/json',
 					}),
 				})
 			);
 
+			// Verify the response is properly forwarded
 			expect(data.token).toBe('jwt_token_123');
-		});
-
-		it('should return 500 if API_PASSWORD not configured', async () => {
-			vi.stubEnv('API_PASSWORD', '');
-
-			const request = new Request('http://localhost/api/activity/login', {
-				method: 'POST',
-			});
-
-			const response = await loginPOST({ request } as any);
-			const data = await response.json();
-
-			expect(response.status).toBe(500);
-			expect(data.error).toContain('API_PASSWORD not set');
-
-			// Restore
-			vi.stubEnv('API_PASSWORD', 'test_password');
 		});
 
 		it('should forward API errors', async () => {

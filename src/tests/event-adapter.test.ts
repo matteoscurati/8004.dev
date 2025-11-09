@@ -28,6 +28,8 @@ describe('Event Adapter', () => {
 				agentId: 'agent_123',
 				agentName: 'Test Agent',
 				timestamp: new Date('2024-01-01T12:00:00Z').getTime(),
+				blockNumber: 12345,
+				txHash: '0x123',
 			});
 		});
 
@@ -57,6 +59,8 @@ describe('Event Adapter', () => {
 				agentId: 'agent_123',
 				agentName: 'Test Agent',
 				timestamp: new Date('2024-01-01T12:01:00Z').getTime(),
+				blockNumber: 12346,
+				txHash: '0x124',
 				metadata: {
 					capability: 'filesystem',
 					capabilityType: 'mcp',
@@ -114,6 +118,8 @@ describe('Event Adapter', () => {
 				agentId: 'agent_123',
 				agentName: 'Test Agent',
 				timestamp: new Date('2024-01-01T12:03:00Z').getTime(),
+				blockNumber: 12348,
+				txHash: '0x126',
 				metadata: {
 					previousStatus: false,
 					currentStatus: true,
@@ -145,6 +151,8 @@ describe('Event Adapter', () => {
 				agentId: 'agent_123',
 				agentName: 'Test Agent',
 				timestamp: new Date('2024-01-01T12:04:00Z').getTime(),
+				blockNumber: 12349,
+				txHash: '0x127',
 			});
 		});
 
