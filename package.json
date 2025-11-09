@@ -9,7 +9,6 @@
 		"build:analyze": "npm run build && open bundle-stats.html",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"postinstall": "node scripts/fix-agent0-sdk.js",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"list-agents": "node scripts/list-agents.js",
