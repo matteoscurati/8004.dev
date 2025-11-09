@@ -5,11 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "node scripts/fix-agent0-sdk.js && vite build",
+		"build": "vite build",
 		"build:analyze": "npm run build && open bundle-stats.html",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"postinstall": "node scripts/fix-agent0-sdk.js || echo 'SDK fix skipped'",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"list-agents": "node scripts/list-agents.js",
@@ -37,6 +36,8 @@
 		"vitest": "^4.0.6"
 	},
 	"dependencies": {
-		"agent0-sdk": "^0.2.2"
+		"agent0-sdk": "^0.2.3",
+		"graphql": "^16.12.0",
+		"graphql-request": "^7.3.1"
 	}
 }
