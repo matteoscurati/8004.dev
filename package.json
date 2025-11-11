@@ -12,6 +12,11 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"list-agents": "node scripts/list-agents.js",
+		"list-agents:all": "node scripts/list-agents-all-chains.js",
+		"list-agents:detailed": "node scripts/list-agents-all-chains.js --detailed",
+		"list-agents:eth": "node scripts/list-agents-all-chains.js --chain 11155111",
+		"list-agents:base": "node scripts/list-agents-all-chains.js --chain 84532",
+		"list-agents:polygon": "node scripts/list-agents-all-chains.js --chain 80002",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
 		"test:run": "vitest run",
@@ -20,24 +25,24 @@
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-vercel": "^6.1.1",
-		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/kit": "^2.48.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.2.8",
 		"@testing-library/user-event": "^14.6.1",
-		"@vitest/coverage-v8": "^4.0.6",
-		"@vitest/ui": "^4.0.6",
+		"@vitest/coverage-v8": "^4.0.8",
+		"@vitest/ui": "^4.0.8",
 		"happy-dom": "^20.0.10",
 		"rollup-plugin-visualizer": "^6.0.5",
-		"svelte": "^5.41.0",
-		"svelte-check": "^4.3.3",
+		"svelte": "^5.43.6",
+		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10",
-		"vitest": "^4.0.6"
+		"vite": "^7.2.2",
+		"vitest": "^4.0.8"
 	},
 	"dependencies": {
-		"agent0-sdk": "^0.2.3",
+		"agent0-sdk": "^0.3.0-rc.1",
 		"graphql": "^16.12.0",
-		"graphql-request": "^7.3.1"
+		"graphql-request": "^7.3.3"
 	}
 }

@@ -40,6 +40,23 @@ export function parseFiltersFromURL(searchParams: URLSearchParams): SearchFilter
 	if (searchParams.get('active') === 'true') filters.active = true;
 	if (searchParams.get('x402') === 'true') filters.x402support = true;
 
+	// Parse chains parameter
+	const chains = searchParams.get('chains');
+	if (chains) {
+		if (chains === 'all') {
+			filters.chains = 'all';
+		} else {
+			// Parse comma-separated chain IDs
+			const chainIds = chains
+				.split(',')
+				.map((id) => parseInt(id.trim()))
+				.filter((id) => !isNaN(id));
+			if (chainIds.length > 0) {
+				filters.chains = chainIds;
+			}
+		}
+	}
+
 	return filters;
 }
 
@@ -65,6 +82,15 @@ export function filtersToURLString(filters: SearchFilters): string {
 	if (filters.a2a) params.set('a2a', 'true');
 	if (filters.active) params.set('active', 'true');
 	if (filters.x402support) params.set('x402', 'true');
+
+	// Serialize chains parameter
+	if (filters.chains) {
+		if (filters.chains === 'all') {
+			params.set('chains', 'all');
+		} else if (Array.isArray(filters.chains) && filters.chains.length > 0) {
+			params.set('chains', filters.chains.join(','));
+		}
+	}
 
 	return params.toString() ? `?${params.toString()}` : '/';
 }

@@ -12,13 +12,19 @@
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import PixelIcon from '$lib/components/PixelIcon.svelte';
+	import ChainBadgeFilters from '$lib/components/ChainBadgeFilters.svelte';
 	import { searchAgents, countAgents, type SearchFilters as Filters, type AgentResult } from '$lib/sdk';
 	import { parseFiltersFromURL, filtersToURLString } from '$lib/utils/url-params';
+	import { getChainConfig } from '$lib/constants/chains';
+	import { agentsCache, hashFilters } from '$lib/stores/agents-cache';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let agents = $state<AgentResult[]>([]);
+	let allAgents = $state<AgentResult[]>([]); // All agents (unfiltered) for chain counts
+	let allAgentsLoaded = $state(false); // Flag to show badges once loaded
+	let allAgentsLoading = $state(false); // Flag to show loading state in badges
 	let loading = $state(false);
 	let loadingMore = $state(false);
 	let loadingCount = $state(false);
@@ -28,6 +34,18 @@
 	let totalMatches = $state<number | undefined>(undefined);
 	let currentFilters = $state<Filters>({});
 	const pageSize = 20;
+
+	// Calculate chain breakdown for results
+	let chainBreakdown = $derived.by(() => {
+		if (!agents || agents.length === 0) return {};
+		const breakdown: Record<number, number> = {};
+		agents.forEach(agent => {
+			if (agent.chainId) {
+				breakdown[agent.chainId] = (breakdown[agent.chainId] || 0) + 1;
+			}
+		});
+		return breakdown;
+	});
 
 	// Throttle URL updates to prevent Safari Lockdown Mode rate limiting
 	let lastURLUpdate = 0;
@@ -50,6 +68,12 @@
 		}
 	}
 
+	// Handle chain selection change from badge filters
+	function handleChainSelectionChange(chains: number[] | 'all') {
+		const newFilters = { ...currentFilters, chains };
+		handleSearch(newFilters);
+	}
+
 	async function handleSearch(filters: Filters, append: boolean = false) {
 		if (append) {
 			loadingMore = true;
@@ -66,7 +90,69 @@
 		hasSearched = true;
 		currentFilters = filters;
 
+		// If allAgents is empty, try to load from cache (for chain badge counts)
+		if (allAgents.length === 0 && !allAgentsLoaded) {
+			const allAgentsFilter = hashFilters({ chains: 'all' });
+			const cachedAllAgents = agentsCache.getAgents(allAgentsFilter);
+			if (cachedAllAgents && cachedAllAgents.length > 0) {
+				allAgents = cachedAllAgents;
+				allAgentsLoaded = true;
+				allAgentsLoading = false;
+			} else if (!append) {
+				// If cache is empty, force load all agents for badge counts
+				// Set flags immediately so badges show while loading
+				allAgentsLoaded = true;
+				allAgentsLoading = true;
+				countAgents({ chains: 'all' }).then(() => {
+					const allAgentsFilter = hashFilters({ chains: 'all' });
+					const cachedAllAgents = agentsCache.getAgents(allAgentsFilter);
+					if (cachedAllAgents && cachedAllAgents.length > 0) {
+						allAgents = cachedAllAgents;
+					}
+					allAgentsLoading = false;
+				}).catch(err => {
+					console.error('Failed to load all agents for badges:', err);
+					allAgentsLoading = false;
+				});
+			}
+		}
+
 		try {
+			// For initial multi-chain searches, fetch count first
+			const isMultiChain = filters.chains === 'all' ||
+				(Array.isArray(filters.chains) && filters.chains.length > 1);
+
+			if (!append && isMultiChain) {
+				// Start counting in parallel with search
+				loadingCount = true;
+
+				// If counting all chains and allAgents not loaded yet, set loading state
+				if (filters.chains === 'all' && !allAgentsLoaded) {
+					allAgentsLoaded = true;
+					allAgentsLoading = true;
+				}
+
+				countAgents(filters).then(count => {
+					totalMatches = count;
+					loadingCount = false;
+
+					// Update allAgents from cache after counting (if chains='all')
+					if (filters.chains === 'all') {
+						const allAgentsFilter = hashFilters({ chains: 'all' });
+						const cachedAllAgents = agentsCache.getAgents(allAgentsFilter);
+						if (cachedAllAgents && cachedAllAgents.length > 0) {
+							allAgents = cachedAllAgents;
+							allAgentsLoaded = true;
+							allAgentsLoading = false;
+						}
+					}
+				}).catch(err => {
+					console.error('Failed to count agents:', err);
+					loadingCount = false;
+					allAgentsLoading = false;
+				});
+			}
+
 			const result = await searchAgents(
 				filters,
 				pageSize,
@@ -77,21 +163,12 @@
 				agents = [...agents, ...result.items];
 			} else {
 				agents = result.items;
-				totalMatches = result.totalMatches;
-
-				// If we don't have totalMatches yet and there are more results,
-				// fetch total count in background (lazy load)
-				if (totalMatches === undefined && result.nextCursor) {
-					loadingCount = true;
-					countAgents(filters).then(count => {
-						totalMatches = count;
-						loadingCount = false;
-					}).catch(err => {
-						console.error('Failed to count agents:', err);
-						loadingCount = false;
-					});
+				// Use result totalMatches if available (single chain)
+				if (result.totalMatches !== undefined) {
+					totalMatches = result.totalMatches;
 				}
 			}
+
 			nextCursor = result.nextCursor;
 		} catch (e) {
 			// Detect specific error types for better user feedback
@@ -123,14 +200,13 @@
 	// Detect Safari Lockdown Mode by checking if RPC calls fail
 	let isLockdownMode = $state(false);
 
-	onMount(() => {
+	onMount(async () => {
 		// Prevent multiple mounts (Safari Lockdown Mode bug)
 		if (isPageMounted) {
 			console.warn('Page already mounted, skipping onMount');
 			return;
 		}
 		isPageMounted = true;
-		console.log('Page mounting for the first time');
 
 		// Detect Lockdown Mode by trying to access AudioContext
 		try {
@@ -145,10 +221,27 @@
 			isLockdownMode = true;
 		}
 
+		// Try to load all agents from cache for chain counts
+		const allAgentsFilter = hashFilters({ chains: 'all' });
+		const cachedAllAgents = agentsCache.getAgents(allAgentsFilter);
+		if (cachedAllAgents && cachedAllAgents.length > 0) {
+			allAgents = cachedAllAgents;
+			allAgentsLoaded = true;
+			allAgentsLoading = false;
+		} else {
+			// Cache is empty, badges will load asynchronously
+			allAgentsLoaded = true;
+			allAgentsLoading = true;
+		}
+
 		// Parse filters from URL if present
 		const urlFilters = parseFiltersFromURL($page.url.searchParams);
+		// Default to 'all' chains if not specified in URL
+		if (!urlFilters.chains) {
+			urlFilters.chains = 'all';
+		}
 		initialFilters = urlFilters;
-		// Initial search with URL filters (or show all agents if no filters)
+		// Initial search with URL filters (or show all agents from all chains)
 		handleSearch(urlFilters);
 	});
 
@@ -298,6 +391,18 @@
 			</button>
 		</div>
 	{:else if hasSearched}
+		<!-- Chain Badge Filters - show once loading starts (even if no results) -->
+		{#if allAgentsLoaded}
+			<div class="chain-badges-container">
+				<ChainBadgeFilters
+					allAgents={allAgents}
+					selectedChains={currentFilters.chains || 'all'}
+					onSelectionChange={handleChainSelectionChange}
+					loading={allAgentsLoading}
+				/>
+			</div>
+		{/if}
+
 		{#if agents.length === 0}
 			<div class="no-results pixel-card">
 				<h3>[ NO AGENTS FOUND ]</h3>
@@ -314,6 +419,7 @@
 						[ {agents.length} AGENT{agents.length !== 1 ? 'S' : ''} FOUND ]
 					{/if}
 				</h2>
+
 				{#if totalMatches !== undefined && totalMatches > agents.length}
 					<p class="pagination-info">
 						{totalMatches - agents.length} more agent{totalMatches - agents.length !== 1 ? 's' : ''} available - click "Load More" below
@@ -462,6 +568,11 @@
 	.retry-button {
 		margin-top: calc(var(--spacing-unit) * 3);
 		min-width: 150px;
+	}
+
+	.chain-badges-container {
+		text-align: center;
+		margin-bottom: calc(var(--spacing-unit) * 3);
 	}
 
 	.no-results {

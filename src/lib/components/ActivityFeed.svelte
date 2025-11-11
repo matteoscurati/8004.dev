@@ -11,6 +11,7 @@
 	import { apiClient } from '$lib/api/client';
 	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
+	import { getChainConfig } from '$lib/constants/chains';
 
 	let events = $state<ActivityEvent[]>([]);
 	let isTracking = $state(false);
@@ -90,10 +91,10 @@
 		errorMessage = null;
 
 		try {
-			// Get last 50 events (home page widget)
+			// Get last 50 events from all chains (multi-chain support)
 			const response = await apiClient.getEvents({
-				limit: 50,
-				chain_id: 11155111 // Sepolia
+				limit: 50
+				// No chain_id filter - get events from all supported chains
 			});
 
 			// Convert API events to activity events
@@ -497,13 +498,21 @@
 		{:else}
 			<div class="event-list">
 				{#each filteredEvents() as event (event.id || `${event.timestamp}-${event.agentId}-${event.type}`)}
+					{@const chainConfig = event.chainId ? getChainConfig(event.chainId) : undefined}
 					<div class="event-item">
 						<div class="event-icon">
 							<PixelIcon type={getEventIconType(event.type)} size={12} color="var(--color-primary)" />
 						</div>
 						<div class="event-content">
 							<div class="event-header">
-								<span class="event-type">{getEventLabel(event)}</span>
+								<div class="event-header-left">
+									{#if chainConfig}
+										<span class="event-chain-badge" style="--chain-color: {chainConfig.color}">
+											<span class="chain-icon">{chainConfig.icon}</span>
+										</span>
+									{/if}
+									<span class="event-type">{getEventLabel(event)}</span>
+								</div>
 								<span class="event-time">{formatTimestamp(event.timestamp)}</span>
 							</div>
 							<div class="event-agent">{event.agentName}</div>
@@ -892,11 +901,37 @@
 		margin-bottom: calc(var(--spacing-unit) / 4);
 	}
 
+	.event-header-left {
+		display: flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) / 2);
+		flex: 1;
+		min-width: 0;
+	}
+
+	.event-chain-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: calc(var(--spacing-unit) / 4);
+		border: 1px solid var(--chain-color);
+		background: rgba(var(--chain-color-rgb, 98, 126, 234), 0.1);
+		flex-shrink: 0;
+		line-height: 1;
+	}
+
+	.event-chain-badge .chain-icon {
+		font-size: 10px;
+		line-height: 1;
+	}
+
 	.event-type {
 		font-size: 8px;
 		font-weight: bold;
 		color: var(--color-text);
 		letter-spacing: 0.3px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.event-time {

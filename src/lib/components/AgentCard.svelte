@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AgentResult } from '$lib/sdk';
 	import CapabilityBadge from './CapabilityBadge.svelte';
+	import { getChainConfig } from '$lib/constants/chains';
 	// import ReputationDisplay from './ReputationDisplay.svelte';
 
 	interface Props {
@@ -9,6 +10,9 @@
 
 	let { agent }: Props = $props();
 	let imageError = $state(false);
+
+	// Get chain configuration for this agent
+	const chainConfig = agent.chainId ? getChainConfig(agent.chainId) : undefined;
 
 	// Generate deterministic pixel art based on agent ID
 	function generatePixelArt(agentId: string): string {
@@ -126,6 +130,12 @@
 	</div>
 
 	<div class="agent-status">
+		{#if chainConfig}
+			<span class="status-badge chain-badge" style="--chain-color: {chainConfig.color}">
+				<span class="chain-icon">{chainConfig.icon}</span>
+				{chainConfig.shortName}
+			</span>
+		{/if}
 		<span class="status-badge {agent.active ? 'active' : 'inactive'}">
 			{agent.active ? '● ACTIVE' : '○ INACTIVE'}
 		</span>
@@ -174,7 +184,7 @@
 		</div>
 	{/if}
 
-	<!-- Reputation temporarily disabled - SDK contract method not available on Sepolia -->
+	<!-- Reputation temporarily disabled - SDK contract method not fully available on testnets -->
 	<!-- <ReputationDisplay agentId={agent.id} /> -->
 </div>
 
@@ -311,6 +321,21 @@
 		border-color: #ff9500;
 		color: #ff9500;
 		background-color: rgba(255, 149, 0, 0.1);
+	}
+
+	.status-badge.chain-badge {
+		border-color: var(--chain-color);
+		color: var(--chain-color);
+		background-color: rgba(var(--chain-color-rgb, 98, 126, 234), 0.1);
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) / 2);
+		font-weight: bold;
+	}
+
+	.chain-icon {
+		font-size: 12px;
+		line-height: 1;
 	}
 
 	.trust-section {

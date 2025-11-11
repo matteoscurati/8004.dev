@@ -150,20 +150,6 @@
 	{#if filtersExpanded}
 		<div class="filter-grid">
 		<div class="filter-group">
-			<label for="network">Network:</label>
-			<div class="network-selector">
-				<input
-					id="network"
-					type="text"
-					class="pixel-input"
-					value="Sepolia Testnet"
-					disabled
-					readonly
-				/>
-				<span class="network-note">More networks coming soon</span>
-			</div>
-		</div>
-		<div class="filter-group">
 			<label for="mcpTools">MCP Tools:</label>
 			<input
 				id="mcpTools"
@@ -381,26 +367,6 @@
 		color: var(--color-text-secondary);
 	}
 
-	.network-selector {
-		display: flex;
-		flex-direction: column;
-		gap: calc(var(--spacing-unit) / 2);
-	}
-
-	.network-selector input:disabled {
-		opacity: 0.7;
-		cursor: not-allowed;
-		color: var(--color-text-secondary);
-		border-color: var(--color-text-secondary);
-	}
-
-	.network-note {
-		font-size: 7px;
-		color: var(--color-text-secondary);
-		opacity: 0.7;
-		font-style: italic;
-	}
-
 	.help-text {
 		font-size: 8px;
 		color: var(--color-text-secondary);
@@ -477,10 +443,6 @@
 			grid-column: span 2;
 			flex-direction: row;
 			gap: calc(var(--spacing-unit) * 3);
-		}
-
-		.filter-group:first-child {
-			grid-column: span 2;
 		}
 	}
 

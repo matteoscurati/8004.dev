@@ -9,8 +9,11 @@ import {
 } from '$env/static/public';
 import { matchesAllFilters, hasClientSideFilters } from '$lib/utils/filters';
 import { LRUCache } from '$lib/utils/cache';
+import { CHAIN_IDS } from '$lib/constants/chains';
+import { agentsCache, hashFilters, cacheLoading } from '$lib/stores/agents-cache';
 
-let sdkInstance: SDK | null = null;
+// Keep multiple SDK instances (one per chain)
+const sdkInstances: Map<number, SDK> = new Map();
 
 // Cache for search results (max 50 entries, 5 minute TTL)
 // IMPORTANT: When returning cached data, always create NEW object references
@@ -29,30 +32,45 @@ function cloneObject<T extends Record<string, any>>(obj: T | null | undefined): 
     return { ...obj };
 }
 
-export function getSDK(): SDK {
+/**
+ * Get SDK instance for a specific chain
+ * Creates and caches SDK instances per chain
+ */
+export function getSDKForChain(chainId: number): SDK {
     if (!browser) {
         throw new Error('SDK can only be initialized in the browser');
     }
 
-    if (!sdkInstance) {
-        const config: any = {
-            chainId: parseInt(PUBLIC_CHAIN_ID),
-            rpcUrl: PUBLIC_RPC_URL,
-            ipfs: PUBLIC_IPFS_PROVIDER as 'node' | 'filecoinPin' | 'pinata'
-        };
-
-        // Add optional IPFS configuration based on provider
-        if (PUBLIC_IPFS_PROVIDER === 'pinata' && PUBLIC_PINATA_JWT?.trim()) {
-            config.pinataJwt = PUBLIC_PINATA_JWT;
-        }
-        if (PUBLIC_IPFS_PROVIDER === 'node' && PUBLIC_IPFS_NODE_URL?.trim()) {
-            config.ipfsNodeUrl = PUBLIC_IPFS_NODE_URL;
-        }
-
-        sdkInstance = new SDK(config);
+    // Return cached instance if available
+    if (sdkInstances.has(chainId)) {
+        return sdkInstances.get(chainId)!;
     }
 
-    return sdkInstance;
+    // Create new SDK instance for this chain
+    const config: any = {
+        chainId: chainId,
+        rpcUrl: PUBLIC_RPC_URL,
+        ipfs: PUBLIC_IPFS_PROVIDER as 'node' | 'filecoinPin' | 'pinata'
+    };
+
+    // Add optional IPFS configuration based on provider
+    if (PUBLIC_IPFS_PROVIDER === 'pinata' && PUBLIC_PINATA_JWT?.trim()) {
+        config.pinataJwt = PUBLIC_PINATA_JWT;
+    }
+    if (PUBLIC_IPFS_PROVIDER === 'node' && PUBLIC_IPFS_NODE_URL?.trim()) {
+        config.ipfsNodeUrl = PUBLIC_IPFS_NODE_URL;
+    }
+
+    const sdk = new SDK(config);
+    sdkInstances.set(chainId, sdk);
+    return sdk;
+}
+
+/**
+ * Get SDK instance for the default chain (backward compatibility)
+ */
+export function getSDK(): SDK {
+    return getSDKForChain(parseInt(PUBLIC_CHAIN_ID));
 }
 
 export interface SearchFilters {
@@ -70,6 +88,8 @@ export interface SearchFilters {
     // Blockchain filters (NEW in SDK v0.2.2)
     owners?: string[];          // Filter by owner wallet address(es)
     operators?: string[];       // Filter by operator wallet address(es)
+    // Multi-chain filters (NEW in SDK v0.3.0)
+    chains?: number[] | 'all';  // Filter by specific chains or search all
 }
 
 export interface AgentResult {
@@ -111,24 +131,33 @@ export interface SearchResult {
 
 // Count total agents matching filters (lightweight, returns only count)
 export async function countAgents(filters: SearchFilters): Promise<number> {
-    const sdk = getSDK();
+    cacheLoading.set(true);
 
-    // IMPORTANT: Array filters and name filter must be handled client-side:
-    // - Subgraph doesn't support name filtering at query level
-    // - SDK uses exact matching for arrays (e.g., "crypto" won't match "crypto-economic")
-    // - SDK applies filters client-side but only on pageSize results
-    const clientFilters = {
-        name: filters.name,
-        mcpTools: filters.mcpTools,
-        a2aSkills: filters.a2aSkills,
-        supportedTrust: filters.supportedTrust
-    };
+    try {
+        // Determine which chains to query
+        const chainsToQuery = filters.chains === 'all'
+            ? CHAIN_IDS
+            : (Array.isArray(filters.chains) ? filters.chains : [parseInt(PUBLIC_CHAIN_ID)]);
 
-    const sdkFilters = { ...filters };
-    delete sdkFilters.name;
-    delete sdkFilters.mcpTools;
-    delete sdkFilters.a2aSkills;
-    delete sdkFilters.supportedTrust;
+        // If no chains selected, return 0
+        if (chainsToQuery.length === 0) {
+            return 0;
+        }
+
+        // IMPORTANT: Array filters and name filter must be handled client-side
+        const clientFilters = {
+            name: filters.name,
+            mcpTools: filters.mcpTools,
+            a2aSkills: filters.a2aSkills,
+            supportedTrust: filters.supportedTrust
+        };
+
+        const sdkFilters = { ...filters };
+        delete sdkFilters.name;
+        delete sdkFilters.mcpTools;
+        delete sdkFilters.a2aSkills;
+        delete sdkFilters.supportedTrust;
+        delete sdkFilters.chains;
 
     // Helper to map SDK agent format to our AgentResult
     const mapAgent = (agent: any): AgentResult => ({
@@ -152,25 +181,217 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
         extras: agent.extras
     });
 
-    let count = 0;
-    let cursor: string | undefined = undefined;
-    const pageSize = 100; // Larger pages for faster counting
+        // Multi-chain: count from all chains in parallel and cache all agents
+        if (chainsToQuery.length > 1) {
+            const chainResults = await Promise.allSettled(
+                chainsToQuery.map(async (chainId) => {
+                    const sdk = getSDKForChain(chainId);
+                    let allAgents: AgentResult[] = [];
+                    let cursor: string | undefined = undefined;
+                    const pageSize = 100;
 
-    // Fetch all pages to count total
-    while (true) {
-        const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+                    while (true) {
+                        const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+                        const filteredItems = result.items
+                            .map(mapAgent)
+                            .filter((agent) => matchesAllFilters(agent, clientFilters));
+                        allAgents.push(...filteredItems);
 
-        // Apply client-side filters with partial matching
-        const filteredItems = result.items
-            .map(mapAgent)
-            .filter((agent) => matchesAllFilters(agent, clientFilters));
-        count += filteredItems.length;
+                        if (!result.nextCursor) break;
+                        cursor = result.nextCursor;
+                    }
 
-        if (!result.nextCursor) break;
-        cursor = result.nextCursor;
+                    return allAgents;
+                })
+            );
+
+            // Aggregate all agents from all chains
+            let allAgents: AgentResult[] = [];
+            chainResults.forEach((result) => {
+                if (result.status === 'fulfilled') {
+                    allAgents.push(...result.value);
+                }
+            });
+
+            // Cache all agents for StatsOverview to reuse
+            const filterHash = hashFilters(filters);
+            agentsCache.setAgents(allAgents, filterHash);
+
+            return allAgents.length;
+        }
+
+        // Single chain: accumulate agents and cache
+        const sdk = getSDKForChain(chainsToQuery[0]);
+        let allAgents: AgentResult[] = [];
+        let cursor: string | undefined = undefined;
+        const pageSize = 100;
+
+        while (true) {
+            const result = await sdk.searchAgents(sdkFilters, undefined, pageSize, cursor);
+            const filteredItems = result.items
+                .map(mapAgent)
+                .filter((agent) => matchesAllFilters(agent, clientFilters));
+            allAgents.push(...filteredItems);
+
+            if (!result.nextCursor) break;
+            cursor = result.nextCursor;
+        }
+
+        // Cache all agents for StatsOverview to reuse
+        const filterHash = hashFilters(filters);
+        agentsCache.setAgents(allAgents, filterHash);
+
+        return allAgents.length;
+    } finally {
+        cacheLoading.set(false);
     }
+}
 
-    return count;
+// Multi-chain cursor format: stores cursor state for each chain
+interface MultiChainCursor {
+    [chainId: string]: string | null; // null means chain exhausted
+}
+
+// Encode multi-chain cursor to base64 string (browser-compatible)
+function encodeMultiChainCursor(cursors: MultiChainCursor): string {
+    try {
+        return btoa(JSON.stringify(cursors));
+    } catch (e) {
+        console.error('Failed to encode cursor:', e);
+        return '';
+    }
+}
+
+// Decode multi-chain cursor from base64 string (browser-compatible)
+function decodeMultiChainCursor(encoded: string): MultiChainCursor {
+    try {
+        return JSON.parse(atob(encoded));
+    } catch {
+        return {};
+    }
+}
+
+/**
+ * Multi-chain search: Query multiple chains in parallel and aggregate results with TRUE pagination
+ * Fetches pageSize items total, distributed across chains, and maintains cursor state per chain
+ */
+async function searchAgentsMultiChain(
+    filters: SearchFilters,
+    pageSize: number,
+    chainsToQuery: number[],
+    cursor?: string
+): Promise<SearchResult> {
+    // Parse multi-chain cursor (if provided)
+    const chainCursors: MultiChainCursor = cursor ? decodeMultiChainCursor(cursor) : {};
+
+    // Extract client-side filters
+    const clientFilters = {
+        name: filters.name,
+        mcpTools: filters.mcpTools,
+        a2aSkills: filters.a2aSkills,
+        supportedTrust: filters.supportedTrust
+    };
+
+    const sdkFilters = { ...filters };
+    delete sdkFilters.name;
+    delete sdkFilters.mcpTools;
+    delete sdkFilters.a2aSkills;
+    delete sdkFilters.supportedTrust;
+    delete sdkFilters.chains;
+
+    // Helper to map SDK agent format
+    const mapAgent = (agent: any): AgentResult => ({
+        id: agent.agentId,
+        name: agent.name,
+        description: agent.description,
+        imageUrl: agent.image,
+        mcp: agent.mcp,
+        a2a: agent.a2a,
+        mcpTools: agent.mcpTools,
+        a2aSkills: agent.a2aSkills,
+        mcpPrompts: agent.mcpPrompts,
+        mcpResources: agent.mcpResources,
+        active: agent.active,
+        x402support: agent.x402support,
+        supportedTrusts: agent.supportedTrusts,
+        owners: agent.owners,
+        operators: agent.operators,
+        chainId: agent.chainId,
+        walletAddress: agent.walletAddress,
+        extras: agent.extras
+    });
+
+    // Calculate items to fetch per chain (distribute pageSize across chains)
+    const itemsPerChain = Math.ceil(pageSize / chainsToQuery.length);
+
+    // Fetch from each chain in parallel
+    const chainResults = await Promise.allSettled(
+        chainsToQuery.map(async (chainId) => {
+            const chainIdStr = chainId.toString();
+
+            // Skip if this chain is exhausted (cursor is explicitly null)
+            if (chainCursors[chainIdStr] === null) {
+                return { items: [], nextCursor: null };
+            }
+
+            const sdk = getSDKForChain(chainId);
+            const currentCursor = chainCursors[chainIdStr];
+
+            // Fetch one page from this chain
+            const result = await sdk.searchAgents(
+                sdkFilters,
+                undefined,
+                itemsPerChain,
+                currentCursor
+            );
+
+            const mappedItems = result.items.map(mapAgent);
+
+            // Apply client-side filters
+            const filtered = mappedItems.filter((agent) =>
+                matchesAllFilters(agent, clientFilters)
+            );
+
+            return {
+                items: filtered,
+                nextCursor: result.nextCursor || null // null means no more pages
+            };
+        })
+    );
+
+    // Aggregate results and update cursors
+    let allAgents: AgentResult[] = [];
+    const newChainCursors: MultiChainCursor = {};
+    let hasMorePages = false;
+
+    chainResults.forEach((result, index) => {
+        const chainId = chainsToQuery[index].toString();
+
+        if (result.status === 'fulfilled') {
+            allAgents.push(...result.value.items);
+            newChainCursors[chainId] = result.value.nextCursor;
+
+            // Check if any chain has more pages
+            if (result.value.nextCursor !== null) {
+                hasMorePages = true;
+            }
+        }
+    });
+
+    // Sort by name for consistent ordering
+    allAgents.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Return only pageSize items
+    const items = allAgents.slice(0, pageSize);
+
+    // Generate next cursor if any chain has more pages
+    const nextCursor = hasMorePages ? encodeMultiChainCursor(newChainCursors) : undefined;
+
+    return {
+        items,
+        nextCursor,
+        totalMatches: undefined // Will be fetched separately with countAgents
+    };
 }
 
 export async function searchAgents(
@@ -178,7 +399,28 @@ export async function searchAgents(
     pageSize: number = 50,
     cursor?: string
 ): Promise<SearchResult> {
-    const sdk = getSDK();
+    // Determine which chains to query
+    const chainsToQuery = filters.chains === 'all'
+        ? CHAIN_IDS
+        : (Array.isArray(filters.chains) ? filters.chains : [parseInt(PUBLIC_CHAIN_ID)]);
+
+    // If no chains selected, return empty result
+    if (chainsToQuery.length === 0) {
+        return {
+            items: [],
+            nextCursor: undefined,
+            totalMatches: 0
+        };
+    }
+
+    // Multi-chain search: query all chains and aggregate results
+    if (chainsToQuery.length > 1 || (chainsToQuery.length === 1 && filters.chains === 'all')) {
+        return searchAgentsMultiChain(filters, pageSize, chainsToQuery, cursor);
+    }
+
+    // Single chain search (original logic)
+    const chainId = chainsToQuery[0];
+    const sdk = getSDKForChain(chainId);
 
     // Generate cache key for initial page requests only (not for pagination)
     // Pagination with cursor should always fetch fresh data

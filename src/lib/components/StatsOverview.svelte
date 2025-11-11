@@ -5,10 +5,13 @@
 
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { get } from 'svelte/store';
 	import { searchAgents, type AgentResult } from '$lib/sdk';
+	import { agentsCache, hashFilters, cacheLoading } from '$lib/stores/agents-cache';
 	import PixelIcon from './PixelIcon.svelte';
 
 	let loading = $state(true);
+	let loadingDetails = $state(false); // For progressive loading
 	let stats = $state({
 		total: 0,
 		active: 0,
@@ -27,7 +30,6 @@
 			return;
 		}
 		isStatsOverviewMounted = true;
-		console.log('StatsOverview mounting for the first time');
 		await loadStats();
 	});
 
@@ -38,26 +40,87 @@
 	async function loadStats() {
 		loading = true;
 		try {
-			// Fetch large sample of agents (up to 500) for statistics
-			// This will use cache if available
-			const result = await searchAgents({}, 500);
+			const filters = { chains: 'all' as const };
+			const filterHash = hashFilters(filters);
 
-			const agents = result.items;
+			// Step 1: Wait for main page to mount and start countAgents()
+			const maxWaitTime = 30000; // 30 seconds max wait
+			const startTime = Date.now();
 
+			// Wait for cacheLoading to become true (countAgents started)
+			// OR for cache to be populated (countAgents already finished)
+			let cachedAgents = agentsCache.getAgents(filterHash);
+
+			while (!cachedAgents && !get(cacheLoading) && (Date.now() - startTime < 5000)) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+				cachedAgents = agentsCache.getAgents(filterHash);
+			}
+
+			// Now wait for cache loading to complete if it started
+			while (get(cacheLoading) && (Date.now() - startTime < maxWaitTime)) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+
+			// Check cache after loading completes
+			cachedAgents = agentsCache.getAgents(filterHash);
+
+			let allAgents: AgentResult[];
+
+			if (cachedAgents && cachedAgents.length > 0) {
+				allAgents = cachedAgents;
+
+				// Progressive loading: show total immediately, calculate details in background
+				stats.total = allAgents.length;
+				loading = false; // Show total quickly
+
+				// Calculate detailed stats progressively
+				loadingDetails = true;
+				await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+			} else {
+
+				// Step 2: Fetch ALL agents from all chains if not cached
+				allAgents = [];
+				let cursor: string | undefined = undefined;
+				const pageSize = 100;
+				let pagesFetched = 0;
+				const maxPages = 20;
+
+				do {
+					const result = await searchAgents(filters, pageSize, cursor);
+					allAgents = [...allAgents, ...result.items];
+					cursor = result.nextCursor;
+					pagesFetched++;
+
+					// Progressive: show total as it grows
+					stats.total = allAgents.length;
+
+					if (pagesFetched >= maxPages) {
+						console.warn('Stats: Reached max pages limit');
+						break;
+					}
+				} while (cursor);
+
+				loading = false; // Show total
+			}
+
+			// Calculate detailed stats (common path)
 			stats = {
-				total: agents.length,
-				active: agents.filter(a => a.active).length,
-				withMcp: agents.filter(a => a.mcp).length,
-				withA2a: agents.filter(a => a.a2a).length,
-				withX402: agents.filter(a => a.x402support).length,
-				activeMcp: agents.filter(a => a.active && a.mcp).length,
-				activeA2a: agents.filter(a => a.active && a.a2a).length,
-				activeX402: agents.filter(a => a.active && a.x402support).length
+				total: allAgents.length,
+				active: allAgents.filter(a => a.active).length,
+				withMcp: allAgents.filter(a => a.mcp).length,
+				withA2a: allAgents.filter(a => a.a2a).length,
+				withX402: allAgents.filter(a => a.x402support).length,
+				activeMcp: allAgents.filter(a => a.active && a.mcp).length,
+				activeA2a: allAgents.filter(a => a.active && a.a2a).length,
+				activeX402: allAgents.filter(a => a.active && a.x402support).length
 			};
+
+			loadingDetails = false;
 		} catch (error) {
 			console.error('Failed to load stats:', error);
 		} finally {
 			loading = false;
+			loadingDetails = false;
 		}
 	}
 
@@ -73,6 +136,10 @@
 			<p>LOADING NETWORK STATS...</p>
 		</div>
 	{:else}
+		<div class="stats-header">
+			<h3 class="stats-title">NETWORK OVERVIEW</h3>
+			<p class="stats-subtitle">Global statistics across all supported chains</p>
+		</div>
 		<div class="stats-grid">
 			<div class="stat-card pixel-card">
 				<div class="stat-icon"><PixelIcon type="chart" size={24} /></div>
@@ -128,6 +195,25 @@
 		font-size: 10px;
 		color: var(--color-text-secondary);
 		letter-spacing: 1px;
+	}
+
+	.stats-header {
+		text-align: center;
+		margin-bottom: calc(var(--spacing-unit) * 2);
+	}
+
+	.stats-title {
+		font-size: 12px;
+		color: var(--color-text);
+		margin-bottom: calc(var(--spacing-unit) / 2);
+		letter-spacing: 1px;
+	}
+
+	.stats-subtitle {
+		font-size: 8px;
+		color: var(--color-text-secondary);
+		opacity: 0.7;
+		margin: 0;
 	}
 
 	.stats-grid {
@@ -207,6 +293,18 @@
 	@media (max-width: 768px) {
 		.stats-overview {
 			margin-bottom: calc(var(--spacing-unit) * 1.5);
+		}
+
+		.stats-header {
+			margin-bottom: var(--spacing-unit);
+		}
+
+		.stats-title {
+			font-size: 10px;
+		}
+
+		.stats-subtitle {
+			font-size: 7px;
 		}
 
 		/* Hide extra stats on mobile */

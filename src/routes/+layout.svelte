@@ -45,7 +45,7 @@
 		<h1 class="glitch" data-text="8004 SEARCH">
 			<a href="/" class="logo-link">8004 SEARCH</a>
 		</h1>
-		<p class="tagline">// Discover AI Agents on Ethereum • Currently on Sepolia Testnet</p>
+		<p class="tagline">// Discover AI Agents Across Multiple Chains • Ethereum, Base & Polygon</p>
 	</header>
 
 	<main class="main">
@@ -53,7 +53,7 @@
 	</main>
 
 	<footer class="footer">
-		<p>Powered by <a href="https://github.com/agent0lab/agent0-ts" target="_blank" rel="noopener noreferrer">Agent0 SDK</a> • Sepolia Testnet</p>
+		<p>Powered by <a href="https://github.com/agent0lab/agent0-ts" target="_blank" rel="noopener noreferrer">Agent0 SDK</a> • Multi-Chain Support (Ethereum, Base, Polygon)</p>
 		<p class="credits">Built by <a href="https://github.com/matteoscurati" target="_blank" rel="noopener noreferrer">Matteo Scurati</a></p>
 	</footer>
 </div>

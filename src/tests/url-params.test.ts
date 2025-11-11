@@ -95,6 +95,46 @@ describe('URL Parameters Utilities', () => {
 				mcpTools: ['github', 'postgres']
 			});
 		});
+
+		it('should parse chains parameter as "all"', () => {
+			const params = new URLSearchParams('chains=all');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				chains: 'all'
+			});
+		});
+
+		it('should parse chains parameter as single chain ID', () => {
+			const params = new URLSearchParams('chains=11155111');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				chains: [11155111]
+			});
+		});
+
+		it('should parse chains parameter as multiple chain IDs', () => {
+			const params = new URLSearchParams('chains=11155111,84532,80002');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				chains: [11155111, 84532, 80002]
+			});
+		});
+
+		it('should parse chains parameter with spaces', () => {
+			const params = new URLSearchParams('chains=11155111, 84532, 80002');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				chains: [11155111, 84532, 80002]
+			});
+		});
+
+		it('should ignore invalid chain IDs', () => {
+			const params = new URLSearchParams('chains=11155111,invalid,84532');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				chains: [11155111, 84532]
+			});
+		});
 	});
 
 	describe('filtersToURLString', () => {
@@ -180,6 +220,29 @@ describe('URL Parameters Utilities', () => {
 			});
 			expect(urlString).toBe('?name=test');
 		});
+
+		it('should convert chains filter to URL string with "all"', () => {
+			const urlString = filtersToURLString({ chains: 'all' });
+			expect(urlString).toBe('?chains=all');
+		});
+
+		it('should convert chains filter to URL string with single chain', () => {
+			const urlString = filtersToURLString({ chains: [11155111] });
+			expect(urlString).toBe('?chains=11155111');
+		});
+
+		it('should convert chains filter to URL string with multiple chains', () => {
+			const urlString = filtersToURLString({ chains: [11155111, 84532, 80002] });
+			expect(urlString).toBe('?chains=11155111%2C84532%2C80002');
+		});
+
+		it('should not include empty chains array', () => {
+			const urlString = filtersToURLString({
+				name: 'test',
+				chains: []
+			});
+			expect(urlString).toBe('?name=test');
+		});
 	});
 
 	describe('Round-trip conversion', () => {
@@ -215,6 +278,32 @@ describe('URL Parameters Utilities', () => {
 			const originalFilters = {
 				name: 'agent',
 				active: true
+			};
+
+			const urlString = filtersToURLString(originalFilters);
+			const params = new URLSearchParams(urlString.replace('?', ''));
+			const parsedFilters = parseFiltersFromURL(params);
+
+			expect(parsedFilters).toEqual(originalFilters);
+		});
+
+		it('should maintain chains="all" through round-trip', () => {
+			const originalFilters = {
+				name: 'test',
+				chains: 'all' as const
+			};
+
+			const urlString = filtersToURLString(originalFilters);
+			const params = new URLSearchParams(urlString.replace('?', ''));
+			const parsedFilters = parseFiltersFromURL(params);
+
+			expect(parsedFilters).toEqual(originalFilters);
+		});
+
+		it('should maintain chains array through round-trip', () => {
+			const originalFilters = {
+				name: 'test',
+				chains: [11155111, 84532, 80002]
 			};
 
 			const urlString = filtersToURLString(originalFilters);

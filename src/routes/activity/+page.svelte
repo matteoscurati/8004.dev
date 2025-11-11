@@ -70,7 +70,7 @@
 			const response = await apiClient.getEvents({
 				limit: pageSize,
 				offset,
-				chain_id: 11155111, // Sepolia
+				// No chain_id filter - get events from all supported chains (multi-chain)
 				category: activeFilter === 'all' ? undefined : activeFilter
 			});
 
@@ -343,18 +343,19 @@
 		return details;
 	}
 
-	// Get Etherscan URL for transaction
+	// Get blockchain explorer URL for transaction
 	function getEtherscanUrl(txHash: string, chainId: number = 11155111): string {
-		// For now we only support Sepolia, but we can add more chains later
+		// Multi-chain explorer support
 		const explorers: Record<number, string> = {
-			1: 'https://etherscan.io',
-			11155111: 'https://sepolia.etherscan.io', // Sepolia
-			// Add more chains as needed:
-			// 137: 'https://polygonscan.com', // Polygon
-			// 8453: 'https://basescan.org', // Base
+			1: 'https://etherscan.io', // Ethereum Mainnet
+			11155111: 'https://sepolia.etherscan.io', // Ethereum Sepolia
+			84532: 'https://sepolia.basescan.org', // Base Sepolia
+			80002: 'https://amoy.polygonscan.com', // Polygon Amoy
+			137: 'https://polygonscan.com', // Polygon Mainnet
+			8453: 'https://basescan.org', // Base Mainnet
 		};
 
-		const explorerUrl = explorers[chainId] || explorers[11155111]; // Default to Sepolia
+		const explorerUrl = explorers[chainId] || explorers[11155111]; // Default to Ethereum Sepolia
 		return `${explorerUrl}/tx/${txHash}`;
 	}
 
@@ -425,7 +426,7 @@
 			ACTIVITY FEED
 		</h1>
 		<p class="page-subtitle">
-			Real-time blockchain events from the ERC-8004 network on Sepolia
+			Real-time blockchain events from the ERC-8004 network across multiple chains
 		</p>
 	</div>
 
