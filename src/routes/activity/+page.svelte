@@ -4,12 +4,17 @@
 	import { goto } from '$app/navigation';
 	import type { ActivityEvent } from '$lib/services/activity-tracker';
 	import PixelIcon from '$lib/components/PixelIcon.svelte';
+	import ChainBadgeFilters from '$lib/components/ChainBadgeFilters.svelte';
 	import { apiClient } from '$lib/api/client';
 	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
+	import { getChainConfig } from '$lib/constants/chains';
 
 	// Filter state
 	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
+
+	// Chain filter state
+	let selectedChains = $state<number[] | 'all'>('all');
 
 	// Read initial state from URL query params
 	function getInitialPage(): number {
@@ -70,7 +75,7 @@
 			const response = await apiClient.getEvents({
 				limit: pageSize,
 				offset,
-				// No chain_id filter - get events from all supported chains (multi-chain)
+				chain_id: selectedChains,
 				category: activeFilter === 'all' ? undefined : activeFilter
 			});
 
@@ -204,6 +209,13 @@
 			return;
 		}
 
+		loadEvents();
+	}
+
+	// Handle chain selection change
+	function handleChainSelectionChange(chains: number[] | 'all') {
+		selectedChains = chains;
+		currentPage = 1; // Reset to first page when changing chains
 		loadEvents();
 	}
 
@@ -430,7 +442,15 @@
 		</p>
 	</div>
 
-	<!-- Filters -->
+	<!-- Chain Badge Filters -->
+	<ChainBadgeFilters
+		allAgents={[]}
+		{selectedChains}
+		onSelectionChange={handleChainSelectionChange}
+		loading={loading}
+	/>
+
+	<!-- Category Filters -->
 	<div class="filters-section">
 		<button
 			class="filter-btn"

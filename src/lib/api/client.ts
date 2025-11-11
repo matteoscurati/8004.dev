@@ -187,7 +187,7 @@ class ApiClient {
 	async getEvents(params?: {
 		limit?: number;
 		offset?: number;
-		chain_id?: number;
+		chain_id?: number | number[] | 'all';
 		agent_id?: string;
 		contract?: string;
 		event_type?: string;
@@ -202,7 +202,16 @@ class ApiClient {
 
 		if (params?.limit) searchParams.set('limit', params.limit.toString());
 		if (params?.offset) searchParams.set('offset', params.offset.toString());
-		if (params?.chain_id) searchParams.set('chain_id', params.chain_id.toString());
+
+		// Handle chain_id: single number, array of numbers, or 'all'
+		if (params?.chain_id && params.chain_id !== 'all') {
+			const chainIds = Array.isArray(params.chain_id)
+				? params.chain_id.join(',')
+				: params.chain_id.toString();
+			searchParams.set('chain_id', chainIds);
+		}
+		// If 'all' or undefined, don't add chain_id parameter (API returns all chains)
+
 		if (params?.agent_id) searchParams.set('agent_id', params.agent_id);
 		if (params?.contract) searchParams.set('contract', params.contract);
 		if (params?.event_type) searchParams.set('event_type', params.event_type);

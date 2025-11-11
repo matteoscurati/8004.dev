@@ -13,6 +13,13 @@
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
 	import { getChainConfig } from '$lib/constants/chains';
 
+	// Props
+	interface Props {
+		selectedChains?: number[] | 'all';
+	}
+
+	let { selectedChains = 'all' }: Props = $props();
+
 	let events = $state<ActivityEvent[]>([]);
 	let isTracking = $state(false);
 	let collapsed = $state(false);
@@ -91,10 +98,10 @@
 		errorMessage = null;
 
 		try {
-			// Get last 50 events from all chains (multi-chain support)
+			// Get last 50 events with chain filter
 			const response = await apiClient.getEvents({
-				limit: 50
-				// No chain_id filter - get events from all supported chains
+				limit: 50,
+				chain_id: selectedChains
 			});
 
 			// Convert API events to activity events
@@ -191,6 +198,18 @@
 			isTracking = false;
 		}
 	}
+
+	// Watch for chain selection changes
+	$effect(() => {
+		// Track selectedChains changes
+		const chains = selectedChains;
+
+		// Re-load events when selectedChains changes (but skip initial load)
+		if (isTracking) {
+			console.log('Chain selection changed, reloading events for chains:', chains);
+			loadEvents(false);
+		}
+	});
 
 	onMount(() => {
 		// Prevent multiple mounts

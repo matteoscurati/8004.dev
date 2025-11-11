@@ -202,6 +202,93 @@ describe('API Client', () => {
 				})
 			);
 		});
+
+		it('should fetch events for a single chain', async () => {
+			const mockEvents = {
+				events: [],
+				total: 0,
+				limit: 10,
+				offset: 0,
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				json: async () => mockEvents,
+			} as Response);
+
+			await apiClient.getEvents({ chain_id: 11155111 });
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				expect.stringContaining('chain_id=11155111'),
+				expect.any(Object)
+			);
+		});
+
+		it('should fetch events for multiple chains', async () => {
+			const mockEvents = {
+				events: [],
+				total: 0,
+				limit: 10,
+				offset: 0,
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				json: async () => mockEvents,
+			} as Response);
+
+			await apiClient.getEvents({ chain_id: [11155111, 84532, 80002] });
+
+			// URL encodes comma as %2C
+			expect(fetchMock).toHaveBeenCalledWith(
+				expect.stringContaining('chain_id=11155111%2C84532%2C80002'),
+				expect.any(Object)
+			);
+		});
+
+		it('should fetch events for all chains when chain_id is "all"', async () => {
+			const mockEvents = {
+				events: [],
+				total: 0,
+				limit: 10,
+				offset: 0,
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				json: async () => mockEvents,
+			} as Response);
+
+			await apiClient.getEvents({ chain_id: 'all' });
+
+			// Should NOT include chain_id parameter
+			expect(fetchMock).toHaveBeenCalledWith(
+				expect.not.stringContaining('chain_id'),
+				expect.any(Object)
+			);
+		});
+
+		it('should fetch events for all chains when chain_id is undefined', async () => {
+			const mockEvents = {
+				events: [],
+				total: 0,
+				limit: 10,
+				offset: 0,
+			};
+
+			fetchMock.mockResolvedValueOnce({
+				ok: true,
+				json: async () => mockEvents,
+			} as Response);
+
+			await apiClient.getEvents({ limit: 20 }); // No chain_id provided
+
+			// Should NOT include chain_id parameter
+			expect(fetchMock).toHaveBeenCalledWith(
+				expect.not.stringContaining('chain_id'),
+				expect.any(Object)
+			);
+		});
 	});
 
 	describe('Get Stats', () => {

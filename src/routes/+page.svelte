@@ -338,7 +338,7 @@
 		<StatsOverview />
 
 		<div class="activity-feed-wrapper">
-			<ActivityFeed />
+			<ActivityFeed selectedChains={currentFilters.chains} />
 		</div>
 	{:else}
 		<div class="lockdown-notice pixel-card">
