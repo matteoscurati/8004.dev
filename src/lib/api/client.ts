@@ -161,7 +161,8 @@ class ApiClient {
 			const error: ApiError = await response.json().catch(() => ({
 				error: `HTTP ${response.status}: ${response.statusText}`,
 			}));
-			throw new Error(error.error || 'API request failed');
+			console.error('API error response:', response.status, error);
+			throw new Error(error.error || `API request failed: ${response.status}`);
 		}
 
 		return response.json();
@@ -200,8 +201,8 @@ class ApiClient {
 
 		const searchParams = new URLSearchParams();
 
-		if (params?.limit) searchParams.set('limit', params.limit.toString());
-		if (params?.offset) searchParams.set('offset', params.offset.toString());
+		if (params?.limit !== undefined) searchParams.set('limit', params.limit.toString());
+		if (params?.offset !== undefined && params.offset > 0) searchParams.set('offset', params.offset.toString());
 
 		// Handle chain_id: single number, array of numbers, or 'all'
 		if (params?.chain_id && params.chain_id !== 'all') {
@@ -216,11 +217,13 @@ class ApiClient {
 		if (params?.contract) searchParams.set('contract', params.contract);
 		if (params?.event_type) searchParams.set('event_type', params.event_type);
 		if (params?.category) searchParams.set('category', params.category);
-		if (params?.from_block) searchParams.set('from_block', params.from_block.toString());
-		if (params?.to_block) searchParams.set('to_block', params.to_block.toString());
+		if (params?.from_block !== undefined) searchParams.set('from_block', params.from_block.toString());
+		if (params?.to_block !== undefined) searchParams.set('to_block', params.to_block.toString());
 
 		const query = searchParams.toString();
 		const endpoint = query ? `/events?${query}` : '/events';
+
+		console.log('API Client - Requesting events:', endpoint, 'params:', params);
 
 		return this.request<EventsResponse>(endpoint);
 	}

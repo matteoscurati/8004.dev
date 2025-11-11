@@ -25,12 +25,16 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			? `${API_URL}/events?${queryParams}`
 			: `${API_URL}/events`;
 
+		console.log('Events proxy - forwarding to:', apiUrl);
+
 		// Forward request to Activity API with auth
 		const response = await fetch(apiUrl, {
 			headers: {
 				'Authorization': authHeader,
 			},
 		});
+
+		console.log('Events proxy - response status:', response.status);
 
 		if (!response.ok) {
 			const error = await response.json().catch(() => ({
