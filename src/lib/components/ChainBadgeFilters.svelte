@@ -31,16 +31,13 @@
 	// Check if a chain is selected
 	function isChainSelected(chainId: number | 'all'): boolean {
 		if (chainId === 'all') {
-			// ALL badge is selected if:
-			// 1. selectedChains is 'all', OR
-			// 2. All individual chains are selected
-			if (selectedChains === 'all') return true;
-			if (Array.isArray(selectedChains) && selectedChains.length === CHAIN_IDS.length) {
-				return CHAIN_IDS.every(id => selectedChains.includes(id));
-			}
-			return false;
+			// ALL badge is selected ONLY when selectedChains is 'all'
+			// (not when all chains are individually selected)
+			return selectedChains === 'all';
 		}
-		return selectedChains === 'all' || (Array.isArray(selectedChains) && selectedChains.includes(chainId));
+		// Individual chain badges are selected ONLY when in array mode
+		// (not when selectedChains is 'all')
+		return Array.isArray(selectedChains) && selectedChains.includes(chainId);
 	}
 
 	// Handle badge click
@@ -60,9 +57,6 @@
 					const newSelection = selectedChains.filter(id => id !== chainId);
 					if (newSelection.length === 0) {
 						// If no chains selected, select all
-						onSelectionChange('all');
-					} else if (newSelection.length === CHAIN_IDS.length) {
-						// If all chains selected, switch to "all"
 						onSelectionChange('all');
 					} else {
 						onSelectionChange(newSelection);
@@ -88,9 +82,9 @@
 		class="chain-badge"
 		class:selected={isChainSelected('all')}
 		onclick={() => handleBadgeClick('all')}
-		style="--chain-color: var(--color-primary)"
+		style="--chain-color: #FFFFFF"
 	>
-		<span class="chain-icon">🌐</span>
+		<span class="chain-icon">◉</span>
 		<span class="chain-name">ALL</span>
 		<span class="chain-count">{loading ? '...' : totalAgentsCount}</span>
 	</button>
@@ -126,29 +120,45 @@
 		display: flex;
 		align-items: center;
 		gap: calc(var(--spacing-unit) * 1);
-		padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
-		background-color: var(--color-bg);
-		border: 2px solid var(--chain-color);
+		padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2.5);
+		background-color: rgba(0, 0, 0, 0.5);
+		border: 2px solid rgba(128, 128, 128, 0.3);
 		color: var(--color-text);
 		font-family: 'Press Start 2P', monospace;
 		font-size: 8px;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all 0.3s ease;
 		position: relative;
-		opacity: 0.6;
+		opacity: 0.5;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 	}
 
 	.chain-badge:hover {
-		opacity: 1;
+		opacity: 0.8;
 		box-shadow: 0 0 10px var(--chain-color);
 		transform: translateY(-2px);
+		border-color: var(--chain-color);
 	}
 
 	.chain-badge.selected {
-		opacity: 1;
-		background-color: rgba(var(--chain-color-rgb, 98, 126, 234), 0.2);
-		box-shadow: 0 0 15px var(--chain-color);
-		border-width: 3px;
+		opacity: 1 !important;
+		background-color: rgba(0, 0, 0, 0.7) !important;
+		box-shadow:
+			0 0 5px var(--chain-color),
+			0 2px 4px rgba(0, 0, 0, 0.5) !important;
+		border: 3px solid var(--chain-color) !important;
+		transform: scale(1.05) translateY(-1px) !important;
+	}
+
+	.chain-badge.selected .chain-name,
+	.chain-badge.selected .chain-count {
+		color: var(--chain-color) !important;
+		text-shadow: 0 0 3px var(--chain-color);
+		font-weight: bold;
+	}
+
+	.chain-badge.selected .chain-icon {
+		filter: drop-shadow(0 0 2px var(--chain-color));
 	}
 
 	.chain-icon {
