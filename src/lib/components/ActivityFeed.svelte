@@ -944,6 +944,9 @@
 	.event-chain-badge .chain-icon {
 		font-size: 9px;
 		line-height: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.event-chain-badge .chain-name {

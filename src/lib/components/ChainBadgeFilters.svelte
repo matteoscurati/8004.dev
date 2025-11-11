@@ -164,6 +164,10 @@
 	.chain-icon {
 		font-size: 12px;
 		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
 	}
 
 	.chain-name {
@@ -222,5 +226,7 @@
 		.chain-icon {
 			font-size: 10px;
 		}
+
+		/* Icon alignment remains consistent on mobile */
 	}
 </style>
