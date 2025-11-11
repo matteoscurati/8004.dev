@@ -25,8 +25,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			? `${API_URL}/events?${queryParams}`
 			: `${API_URL}/events`;
 
-		console.log('Events proxy - forwarding to:', apiUrl);
-
 		// Forward request to Activity API with auth
 		const response = await fetch(apiUrl, {
 			headers: {
@@ -34,20 +32,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			},
 		});
 
-		console.log('Events proxy - response status:', response.status);
-
 		if (!response.ok) {
-			// Try to get detailed error message from API
-			const errorText = await response.text();
-			console.error('Events proxy - API error response:', errorText);
-
-			let error;
-			try {
-				error = JSON.parse(errorText);
-			} catch {
-				error = { error: `API request failed: ${response.status}`, details: errorText };
-			}
-
+			const error = await response.json().catch(() => ({
+				error: `API request failed: ${response.status}`,
+			}));
 			return json(error, { status: response.status });
 		}
 

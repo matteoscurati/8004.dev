@@ -161,7 +161,6 @@ class ApiClient {
 			const error: ApiError = await response.json().catch(() => ({
 				error: `HTTP ${response.status}: ${response.statusText}`,
 			}));
-			console.error('API error response:', response.status, error);
 			throw new Error(error.error || `API request failed: ${response.status}`);
 		}
 
@@ -222,8 +221,6 @@ class ApiClient {
 
 		const query = searchParams.toString();
 		const endpoint = query ? `/events?${query}` : '/events';
-
-		console.log('API Client - Requesting events:', endpoint, 'params:', params);
 
 		return this.request<EventsResponse>(endpoint);
 	}

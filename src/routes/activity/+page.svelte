@@ -534,13 +534,22 @@
 		{:else}
 			<div class="events-list">
 				{#each events as event (event.id)}
+					{@const chainConfig = event.chainId ? getChainConfig(event.chainId) : undefined}
 					<div class="event-item pixel-card">
 						<div class="event-icon">
 							<PixelIcon type={getEventIcon(event)} size={24} />
 						</div>
 						<div class="event-content">
 							<div class="event-header">
-								<span class="event-type">{getEventTypeLabel(event)}</span>
+								<div class="event-header-left">
+									{#if chainConfig}
+										<span class="event-chain-badge" style="--chain-color: {chainConfig.color}">
+											<span class="chain-icon">{chainConfig.icon}</span>
+											<span class="chain-name">{chainConfig.shortName}</span>
+										</span>
+									{/if}
+									<span class="event-type">{getEventTypeLabel(event)}</span>
+								</div>
 								<span class="event-time">{formatTimestamp(event.timestamp)}</span>
 							</div>
 							<div class="event-agent-name">{event.agentName}</div>
@@ -722,6 +731,40 @@
 		align-items: center;
 		gap: var(--spacing-unit);
 		margin-bottom: calc(var(--spacing-unit) / 2);
+	}
+
+	.event-header-left {
+		display: flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) * 1);
+		flex: 1;
+		min-width: 0;
+	}
+
+	.event-chain-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--spacing-unit) / 2);
+		padding: calc(var(--spacing-unit) / 2) calc(var(--spacing-unit) * 1);
+		border: 2px solid var(--chain-color);
+		background: rgba(0, 0, 0, 0.6);
+		flex-shrink: 0;
+		line-height: 1;
+		box-shadow: 0 0 10px var(--chain-color);
+	}
+
+	.event-chain-badge .chain-icon {
+		font-size: 12px;
+		line-height: 1;
+		filter: drop-shadow(0 0 2px var(--chain-color));
+	}
+
+	.event-chain-badge .chain-name {
+		font-size: 8px;
+		font-weight: bold;
+		color: var(--chain-color);
+		letter-spacing: 0.5px;
+		line-height: 1;
 	}
 
 	.event-type {
