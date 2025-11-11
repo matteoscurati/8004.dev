@@ -932,26 +932,25 @@
 	.event-chain-badge {
 		display: inline-flex;
 		align-items: center;
-		gap: calc(var(--spacing-unit) / 2);
-		padding: calc(var(--spacing-unit) / 2) calc(var(--spacing-unit) * 1);
-		border: 2px solid var(--chain-color);
-		background: rgba(0, 0, 0, 0.6);
+		gap: calc(var(--spacing-unit) / 4);
+		padding: 2px 6px;
+		border: 1px solid var(--chain-color);
+		background: rgba(0, 0, 0, 0.3);
 		flex-shrink: 0;
 		line-height: 1;
-		box-shadow: 0 0 8px var(--chain-color);
+		opacity: 0.8;
 	}
 
 	.event-chain-badge .chain-icon {
-		font-size: 11px;
+		font-size: 9px;
 		line-height: 1;
-		filter: drop-shadow(0 0 2px var(--chain-color));
 	}
 
 	.event-chain-badge .chain-name {
 		font-size: 7px;
-		font-weight: bold;
+		font-weight: normal;
 		color: var(--chain-color);
-		letter-spacing: 0.5px;
+		letter-spacing: 0.3px;
 		line-height: 1;
 	}
 
