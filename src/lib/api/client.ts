@@ -202,7 +202,7 @@ class ApiClient {
 		const searchParams = new URLSearchParams();
 
 		if (params?.limit !== undefined) searchParams.set('limit', params.limit.toString());
-		if (params?.offset !== undefined && params.offset > 0) searchParams.set('offset', params.offset.toString());
+		if (params?.offset !== undefined) searchParams.set('offset', params.offset.toString());
 
 		// Handle chain_id: single number, array of numbers, or 'all'
 		if (params?.chain_id && params.chain_id !== 'all') {

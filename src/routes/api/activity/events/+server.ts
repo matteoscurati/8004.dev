@@ -37,9 +37,17 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		console.log('Events proxy - response status:', response.status);
 
 		if (!response.ok) {
-			const error = await response.json().catch(() => ({
-				error: `API request failed: ${response.status}`,
-			}));
+			// Try to get detailed error message from API
+			const errorText = await response.text();
+			console.error('Events proxy - API error response:', errorText);
+
+			let error;
+			try {
+				error = JSON.parse(errorText);
+			} catch {
+				error = { error: `API request failed: ${response.status}`, details: errorText };
+			}
+
 			return json(error, { status: response.status });
 		}
 
