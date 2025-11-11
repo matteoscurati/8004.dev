@@ -31,7 +31,14 @@
 	// Check if a chain is selected
 	function isChainSelected(chainId: number | 'all'): boolean {
 		if (chainId === 'all') {
-			return selectedChains === 'all';
+			// ALL badge is selected if:
+			// 1. selectedChains is 'all', OR
+			// 2. All individual chains are selected
+			if (selectedChains === 'all') return true;
+			if (Array.isArray(selectedChains) && selectedChains.length === CHAIN_IDS.length) {
+				return CHAIN_IDS.every(id => selectedChains.includes(id));
+			}
+			return false;
 		}
 		return selectedChains === 'all' || (Array.isArray(selectedChains) && selectedChains.includes(chainId));
 	}
