@@ -35,6 +35,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 	// Extract blockchain data
 	const blockNumber = apiEvent.block_number;
 	const txHash = apiEvent.transaction_hash;
+	const chainId = apiEvent.chain_id; // Extract chain ID
 
 	// Extract agent info from event_data
 	const { agent, agentId, agent_id, name, owner, token_uri } = apiEvent.event_data;
@@ -58,7 +59,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentName: eventAgentName,
 				timestamp,
 				blockNumber,
-				txHash
+				txHash,
+				chainId
 			};
 
 		case 'MetadataSet': {
@@ -76,6 +78,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 					timestamp,
 					blockNumber,
 					txHash,
+					chainId,
 					metadata: {
 						key: 'agentName',
 						value: hexValue,
@@ -93,6 +96,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					key,
 					value: hexValue,
@@ -110,6 +114,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					requestHash: apiEvent.event_data.request_hash,
 					requestUri: apiEvent.event_data.request_uri,
@@ -126,6 +131,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					requestHash: apiEvent.event_data.request_hash,
 					responseUri: apiEvent.event_data.response_uri,
@@ -143,6 +149,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					score: apiEvent.event_data.score,
 					feedbackUri: apiEvent.event_data.feedback_uri,
@@ -165,6 +172,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					capability,
 					capabilityType: capabilityType as 'mcp' | 'a2a'
@@ -182,6 +190,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					previousStatus: apiEvent.event_data.previousStatus,
 					currentStatus: apiEvent.event_data.currentStatus || apiEvent.event_data.active
@@ -197,7 +206,8 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				agentName: eventAgentName,
 				timestamp,
 				blockNumber,
-				txHash
+				txHash,
+				chainId
 			};
 
 		case 'UriUpdated':
@@ -211,6 +221,7 @@ export function apiEventToActivityEvent(apiEvent: Event): ActivityEvent | null {
 				timestamp,
 				blockNumber,
 				txHash,
+				chainId,
 				metadata: {
 					key: 'uri',
 					value: uri,
