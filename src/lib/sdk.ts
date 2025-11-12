@@ -321,8 +321,13 @@ async function searchAgentsMultiChain(
         extras: agent.extras
     });
 
-    // Calculate items to fetch per chain (distribute pageSize across chains)
-    const itemsPerChain = Math.ceil(pageSize / chainsToQuery.length);
+    // Calculate items to fetch per chain
+    // When client-side filters are present (name, mcpTools, etc.), fetch full pageSize from each chain
+    // because many results will be filtered out. Otherwise, distribute pageSize across chains.
+    const hasClientFilters = hasClientSideFilters(clientFilters);
+    const itemsPerChain = hasClientFilters
+        ? pageSize
+        : Math.ceil(pageSize / chainsToQuery.length);
 
     // Fetch from each chain in parallel
     const chainResults = await Promise.allSettled(
