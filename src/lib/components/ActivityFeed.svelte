@@ -943,8 +943,8 @@
 
 	.event-chain-badge .chain-icon {
 		font-size: 9px;
-		line-height: 7px;
-		align-self: center;
+		line-height: 1;
+		transform: translateY(0.5px);
 	}
 
 	.event-chain-badge .chain-name {
@@ -952,8 +952,7 @@
 		font-weight: normal;
 		color: var(--chain-color);
 		letter-spacing: 0.3px;
-		line-height: 7px;
-		align-self: center;
+		line-height: 1;
 	}
 
 	.event-type {
