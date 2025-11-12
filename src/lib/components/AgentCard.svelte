@@ -132,12 +132,11 @@
 	<div class="agent-status">
 		{#if chainConfig}
 			<span class="status-badge chain-badge" style="--chain-color: {chainConfig.color}">
-				<span class="chain-icon">{chainConfig.icon}</span>
 				{chainConfig.shortName}
 			</span>
 		{/if}
 		<span class="status-badge {agent.active ? 'active' : 'inactive'}">
-			{agent.active ? '● ACTIVE' : '○ INACTIVE'}
+			{agent.active ? 'ACTIVE' : 'INACTIVE'}
 		</span>
 		{#if agent.mcp}
 			<span class="status-badge protocol-mcp">MCP</span>
@@ -331,11 +330,6 @@
 		align-items: center;
 		gap: calc(var(--spacing-unit) / 2);
 		font-weight: bold;
-	}
-
-	.chain-icon {
-		font-size: 12px;
-		line-height: 1;
 	}
 
 	.trust-section {

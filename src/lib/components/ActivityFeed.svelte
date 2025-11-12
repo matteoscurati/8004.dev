@@ -527,7 +527,6 @@
 								<div class="event-header-left">
 									{#if chainConfig}
 										<span class="event-chain-badge" style="--chain-color: {chainConfig.color}">
-											<span class="chain-icon">{chainConfig.icon}</span>
 											<span class="chain-name">{chainConfig.shortName}</span>
 										</span>
 									{/if}
@@ -939,12 +938,6 @@
 		flex-shrink: 0;
 		line-height: 1;
 		opacity: 0.8;
-	}
-
-	.event-chain-badge .chain-icon {
-		font-size: 9px;
-		line-height: 1;
-		transform: translateY(0.5px);
 	}
 
 	.event-chain-badge .chain-name {

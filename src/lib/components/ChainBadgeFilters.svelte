@@ -165,7 +165,7 @@
 		font-size: 12px;
 		flex-shrink: 0;
 		line-height: 1;
-		transform: translateY(0.5px);
+		transform: translateY(-2.5px);
 	}
 
 	.chain-name {
