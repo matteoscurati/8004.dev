@@ -164,20 +164,16 @@
 	.chain-icon {
 		font-size: 12px;
 		flex-shrink: 0;
-		line-height: 12px;
-		height: 12px;
-		display: flex;
-		align-items: center;
+		line-height: 9px;
+		align-self: center;
 	}
 
 	.chain-name {
 		font-size: 9px;
 		color: var(--color-text);
 		flex-shrink: 0;
-		line-height: 12px;
-		height: 12px;
-		display: flex;
-		align-items: center;
+		line-height: 9px;
+		align-self: center;
 	}
 
 	.chain-count {
@@ -185,10 +181,8 @@
 		color: var(--chain-color);
 		font-weight: bold;
 		margin-left: calc(var(--spacing-unit) * 0.5);
-		line-height: 12px;
-		height: 12px;
-		display: flex;
-		align-items: center;
+		line-height: 9px;
+		align-self: center;
 	}
 
 	/* Hover effects */
@@ -233,14 +227,12 @@
 
 		.chain-icon {
 			font-size: 10px;
-			line-height: 10px;
-			height: 10px;
+			line-height: 8px;
 		}
 
 		.chain-name,
 		.chain-count {
-			line-height: 10px;
-			height: 10px;
+			line-height: 8px;
 		}
 	}
 </style>
