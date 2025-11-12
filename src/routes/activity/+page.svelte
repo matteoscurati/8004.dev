@@ -8,7 +8,7 @@
 	import { apiClient } from '$lib/api/client';
 	import { apiEventToActivityEvent } from '$lib/utils/event-adapter';
 	import { getEnrichedAgentData, preloadAgents } from '$lib/utils/agent-enrichment';
-	import { getChainConfig } from '$lib/constants/chains';
+	import { getChainConfig, getExplorerTxUrl } from '$lib/constants/chains';
 
 	// Filter state
 	type EventFilter = 'all' | 'agents' | 'capabilities' | 'metadata' | 'validation' | 'feedback' | 'payments';
@@ -355,21 +355,6 @@
 		return details;
 	}
 
-	// Get blockchain explorer URL for transaction
-	function getEtherscanUrl(txHash: string, chainId: number = 11155111): string {
-		// Multi-chain explorer support
-		const explorers: Record<number, string> = {
-			1: 'https://etherscan.io', // Ethereum Mainnet
-			11155111: 'https://sepolia.etherscan.io', // Ethereum Sepolia
-			84532: 'https://sepolia.basescan.org', // Base Sepolia
-			80002: 'https://amoy.polygonscan.com', // Polygon Amoy
-			137: 'https://polygonscan.com', // Polygon Mainnet
-			8453: 'https://basescan.org', // Base Mainnet
-		};
-
-		const explorerUrl = explorers[chainId] || explorers[11155111]; // Default to Ethereum Sepolia
-		return `${explorerUrl}/tx/${txHash}`;
-	}
 
 	function getEventIcon(event: ActivityEvent): 'robot' | 'lightning' | 'refresh' | 'check' | 'chart' | 'dollar' | 'dot' {
 		switch (event.type) {
@@ -544,7 +529,6 @@
 								<div class="event-header-left">
 									{#if chainConfig}
 										<span class="event-chain-badge" style="--chain-color: {chainConfig.color}">
-											<span class="chain-icon">{chainConfig.icon}</span>
 											<span class="chain-name">{chainConfig.shortName}</span>
 										</span>
 									{/if}
@@ -559,7 +543,7 @@
 							{#if event.txHash}
 								<div class="event-tx">
 									<a
-										href={getEtherscanUrl(event.txHash)}
+										href={getExplorerTxUrl(event.chainId, event.txHash)}
 										target="_blank"
 										rel="noopener noreferrer"
 										class="tx-link"
@@ -751,12 +735,6 @@
 		flex-shrink: 0;
 		line-height: 1;
 		opacity: 0.85;
-	}
-
-	.event-chain-badge .chain-icon {
-		font-size: 10px;
-		line-height: 1;
-		transform: translateY(0.5px);
 	}
 
 	.event-chain-badge .chain-name {

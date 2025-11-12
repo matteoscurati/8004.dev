@@ -88,6 +88,15 @@ export function getExplorerUrl(chainId: number, address: string): string {
 }
 
 /**
+ * Get explorer URL for a transaction on a specific chain
+ */
+export function getExplorerTxUrl(chainId: number, txHash: string): string {
+	const config = SUPPORTED_CHAINS[chainId];
+	if (!config) return '';
+	return `${config.explorerUrl}/tx/${txHash}`;
+}
+
+/**
  * Check if chainId is supported
  */
 export function isSupportedChain(chainId: number): boolean {

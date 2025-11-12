@@ -31,6 +31,7 @@ export interface ActivityEvent {
 	// Blockchain data
 	blockNumber?: number;
 	txHash?: string;
+	chainId: number;
 	metadata?: {
 		capability?: string;
 		capabilityType?: 'mcp' | 'a2a';
@@ -65,6 +66,7 @@ export interface ActivityEvent {
 interface AgentSnapshot {
 	id: string;
 	name: string;
+	chainId: number;
 	active: boolean;
 	x402support: boolean;
 	mcpTools: string[];
@@ -161,7 +163,8 @@ export class ActivityTracker {
 					type: 'agent_registered',
 					agentId: agent.id,
 					agentName: agent.name,
-					timestamp: Date.now()
+					timestamp: Date.now(),
+					chainId: snapshot.chainId
 				});
 			} else {
 				// Check for changes in existing agent
@@ -173,6 +176,7 @@ export class ActivityTracker {
 						agentId: agent.id,
 						agentName: agent.name,
 						timestamp: Date.now(),
+						chainId: snapshot.chainId,
 						metadata: {
 							previousStatus: previous.active,
 							currentStatus: snapshot.active
@@ -186,7 +190,8 @@ export class ActivityTracker {
 						type: 'x402_enabled',
 						agentId: agent.id,
 						agentName: agent.name,
-						timestamp: Date.now()
+						timestamp: Date.now(),
+						chainId: snapshot.chainId
 					});
 				}
 
@@ -200,6 +205,7 @@ export class ActivityTracker {
 						agentId: agent.id,
 						agentName: agent.name,
 						timestamp: Date.now(),
+						chainId: snapshot.chainId,
 						metadata: {
 							capability: tool,
 							capabilityType: 'mcp'
@@ -217,6 +223,7 @@ export class ActivityTracker {
 						agentId: agent.id,
 						agentName: agent.name,
 						timestamp: Date.now(),
+						chainId: snapshot.chainId,
 						metadata: {
 							capability: skill,
 							capabilityType: 'a2a'
@@ -242,8 +249,9 @@ export class ActivityTracker {
 		return {
 			id: agent.id,
 			name: agent.name,
-			active: agent.active,
-			x402support: agent.x402support,
+			chainId: agent.chainId || 11155111, // Default to Ethereum Sepolia
+			active: agent.active ?? false,
+			x402support: agent.x402support ?? false,
 			mcpTools: agent.mcpTools || [],
 			a2aSkills: agent.a2aSkills || []
 		};
