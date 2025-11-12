@@ -755,10 +755,10 @@
 
 	.event-chain-badge .chain-icon {
 		font-size: 10px;
-		line-height: 1;
-		display: inline-flex;
+		line-height: 10px;
+		height: 10px;
+		display: flex;
 		align-items: center;
-		justify-content: center;
 	}
 
 	.event-chain-badge .chain-name {
@@ -766,7 +766,10 @@
 		font-weight: normal;
 		color: var(--chain-color);
 		letter-spacing: 0.3px;
-		line-height: 1;
+		line-height: 10px;
+		height: 10px;
+		display: flex;
+		align-items: center;
 	}
 
 	.event-type {
