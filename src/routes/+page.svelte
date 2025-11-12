@@ -195,6 +195,7 @@
 		}
 	}
 
+	// Initial filters state for SearchFilters component
 	let initialFilters = $state<Filters>({});
 
 	// Detect Safari Lockdown Mode by checking if RPC calls fail
@@ -234,15 +235,15 @@
 			allAgentsLoading = true;
 		}
 
-		// Parse filters from URL if present
+		// Parse filters from URL now that we're on the client
 		const urlFilters = parseFiltersFromURL($page.url.searchParams);
-		// Default to 'all' chains if not specified in URL
 		if (!urlFilters.chains) {
 			urlFilters.chains = 'all';
 		}
 		initialFilters = urlFilters;
-		// Initial search with URL filters (or show all agents from all chains)
-		handleSearch(urlFilters);
+
+		// Run initial search with URL filters
+		await handleSearch(urlFilters);
 	});
 
 	onDestroy(() => {

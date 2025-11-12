@@ -322,12 +322,24 @@ async function searchAgentsMultiChain(
     });
 
     // Calculate items to fetch per chain
-    // When client-side filters are present (name, mcpTools, etc.), fetch full pageSize from each chain
-    // because many results will be filtered out. Otherwise, distribute pageSize across chains.
+    // When client-side filters are present (name, mcpTools, etc.), fetch MORE items from each chain
+    // because many results will be filtered out.
+    // For name filters specifically, fetch ALL items since SDK doesn't support server-side name filtering
     const hasClientFilters = hasClientSideFilters(clientFilters);
-    const itemsPerChain = hasClientFilters
-        ? pageSize
-        : Math.ceil(pageSize / chainsToQuery.length);
+    const hasNameFilter = clientFilters.name !== undefined;
+
+    let itemsPerChain: number;
+    if (hasNameFilter) {
+        // Name search: fetch ALL items from each chain (SDK doesn't support server-side name filtering)
+        // Agent names can be at any position, so we must fetch everything
+        itemsPerChain = 9999; // Large number to fetch all items
+    } else if (hasClientFilters) {
+        // Other filters: fetch 2x pageSize from each chain
+        itemsPerChain = Math.min(pageSize * 2, 200);
+    } else {
+        // No filters: distribute pageSize across chains
+        itemsPerChain = Math.ceil(pageSize / chainsToQuery.length);
+    }
 
     // Fetch from each chain in parallel
     const chainResults = await Promise.allSettled(
@@ -340,9 +352,40 @@ async function searchAgentsMultiChain(
             }
 
             const sdk = getSDKForChain(chainId);
-            const currentCursor = chainCursors[chainIdStr];
+            let currentCursor = chainCursors[chainIdStr];
 
-            // Fetch one page from this chain
+            // For name searches, fetch ALL pages from this chain
+            if (hasNameFilter) {
+                let allFilteredItems: AgentResult[] = [];
+                const fetchPageSize = 100;
+
+                while (true) {
+                    const result = await sdk.searchAgents(
+                        sdkFilters,
+                        undefined,
+                        fetchPageSize,
+                        currentCursor
+                    );
+
+                    const mappedItems = result.items.map(mapAgent);
+                    const filtered = mappedItems.filter((agent) =>
+                        matchesAllFilters(agent, clientFilters)
+                    );
+
+                    allFilteredItems.push(...filtered);
+
+                    if (!result.nextCursor) break;
+                    currentCursor = result.nextCursor;
+                }
+
+                // Return only pageSize items for display, but mark as having more if we got more
+                return {
+                    items: allFilteredItems.slice(0, pageSize),
+                    nextCursor: allFilteredItems.length > pageSize ? 'has-more' : null
+                };
+            }
+
+            // Normal search (not name): fetch one page
             const result = await sdk.searchAgents(
                 sdkFilters,
                 undefined,
