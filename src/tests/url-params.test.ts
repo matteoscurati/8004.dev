@@ -39,6 +39,38 @@ describe('URL Parameters Utilities', () => {
 			});
 		});
 
+		it('should parse oasfSkills parameter', () => {
+			const params = new URLSearchParams('oasfSkills=natural_language_processing/summarization,data_science/data_analysis');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				oasfSkills: ['natural_language_processing/summarization', 'data_science/data_analysis']
+			});
+		});
+
+		it('should parse oasfSkills parameter with spaces', () => {
+			const params = new URLSearchParams('oasfSkills=natural_language_processing/summarization, data_science/data_analysis');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				oasfSkills: ['natural_language_processing/summarization', 'data_science/data_analysis']
+			});
+		});
+
+		it('should parse oasfDomains parameter', () => {
+			const params = new URLSearchParams('oasfDomains=finance_and_business/investment_services,technology/software_development');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				oasfDomains: ['finance_and_business/investment_services', 'technology/software_development']
+			});
+		});
+
+		it('should parse oasfDomains parameter with spaces', () => {
+			const params = new URLSearchParams('oasfDomains=finance_and_business/investment_services, technology/software_development');
+			const filters = parseFiltersFromURL(params);
+			expect(filters).toEqual({
+				oasfDomains: ['finance_and_business/investment_services', 'technology/software_development']
+			});
+		});
+
 		it('should parse supportedTrust parameter', () => {
 			const params = new URLSearchParams('supportedTrust=reputation,crypto-economic');
 			const filters = parseFiltersFromURL(params);
@@ -75,13 +107,15 @@ describe('URL Parameters Utilities', () => {
 
 		it('should parse multiple parameters together', () => {
 			const params = new URLSearchParams(
-				'name=agent&mcpTools=github,postgres&a2aSkills=python&supportedTrust=reputation&active=true&x402=true'
+				'name=agent&mcpTools=github,postgres&a2aSkills=python&oasfSkills=natural_language_processing/summarization&oasfDomains=finance_and_business/investment_services&supportedTrust=reputation&active=true&x402=true'
 			);
 			const filters = parseFiltersFromURL(params);
 			expect(filters).toEqual({
 				name: 'agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python'],
+				oasfSkills: ['natural_language_processing/summarization'],
+				oasfDomains: ['finance_and_business/investment_services'],
 				supportedTrust: ['reputation'],
 				active: true,
 				x402support: true
@@ -162,6 +196,20 @@ describe('URL Parameters Utilities', () => {
 			expect(urlString).toBe('?a2aSkills=python%2Cdata-analysis');
 		});
 
+		it('should convert oasfSkills filter to URL string', () => {
+			const urlString = filtersToURLString({
+				oasfSkills: ['natural_language_processing/summarization', 'data_science/data_analysis']
+			});
+			expect(urlString).toBe('?oasfSkills=natural_language_processing%2Fsummarization%2Cdata_science%2Fdata_analysis');
+		});
+
+		it('should convert oasfDomains filter to URL string', () => {
+			const urlString = filtersToURLString({
+				oasfDomains: ['finance_and_business/investment_services', 'technology/software_development']
+			});
+			expect(urlString).toBe('?oasfDomains=finance_and_business%2Finvestment_services%2Ctechnology%2Fsoftware_development');
+		});
+
 		it('should convert supportedTrust filter to URL string', () => {
 			const urlString = filtersToURLString({
 				supportedTrust: ['reputation', 'crypto-economic']
@@ -184,6 +232,8 @@ describe('URL Parameters Utilities', () => {
 				name: 'agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python'],
+				oasfSkills: ['natural_language_processing/summarization'],
+				oasfDomains: ['finance_and_business/investment_services'],
 				supportedTrust: ['reputation'],
 				active: true,
 				x402support: true
@@ -192,6 +242,8 @@ describe('URL Parameters Utilities', () => {
 			expect(urlString).toContain('name=agent');
 			expect(urlString).toContain('mcpTools=github%2Cpostgres');
 			expect(urlString).toContain('a2aSkills=python');
+			expect(urlString).toContain('oasfSkills=natural_language_processing');
+			expect(urlString).toContain('oasfDomains=finance_and_business');
 			expect(urlString).toContain('supportedTrust=reputation');
 			expect(urlString).toContain('active=true');
 			expect(urlString).toContain('x402=true');
@@ -209,6 +261,22 @@ describe('URL Parameters Utilities', () => {
 			const urlString = filtersToURLString({
 				name: 'test',
 				a2aSkills: []
+			});
+			expect(urlString).toBe('?name=test');
+		});
+
+		it('should not include empty oasfSkills array', () => {
+			const urlString = filtersToURLString({
+				name: 'test',
+				oasfSkills: []
+			});
+			expect(urlString).toBe('?name=test');
+		});
+
+		it('should not include empty oasfDomains array', () => {
+			const urlString = filtersToURLString({
+				name: 'test',
+				oasfDomains: []
 			});
 			expect(urlString).toBe('?name=test');
 		});
@@ -251,6 +319,8 @@ describe('URL Parameters Utilities', () => {
 				name: 'test-agent',
 				mcpTools: ['github', 'postgres'],
 				a2aSkills: ['python', 'data-analysis'],
+				oasfSkills: ['natural_language_processing/summarization'],
+				oasfDomains: ['finance_and_business/investment_services'],
 				supportedTrust: ['reputation', 'crypto-economic'],
 				active: true,
 				x402support: true

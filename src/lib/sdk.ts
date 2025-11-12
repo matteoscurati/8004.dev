@@ -80,6 +80,9 @@ export interface SearchFilters {
     a2a?: boolean;              // Filter for A2A-enabled agents
     mcpTools?: string[];
     a2aSkills?: string[];
+    // OASF filters (NEW in SDK v0.31)
+    oasfSkills?: string[];      // Filter by OASF skills (e.g., ["natural_language_processing/summarization"])
+    oasfDomains?: string[];     // Filter by OASF domains (e.g., ["finance_and_business/investment_services"])
     // Status filters
     active?: boolean;
     x402support?: boolean;
@@ -104,6 +107,9 @@ export interface AgentResult {
     a2aSkills?: string[];
     mcpPrompts?: string[];
     mcpResources?: string[];
+    // OASF (Open Agentic Schema Framework)
+    oasfSkills?: string[];      // OASF taxonomy skills (136 available)
+    oasfDomains?: string[];     // OASF taxonomy domains (204 available)
     // Status
     active?: boolean;
     x402support?: boolean;
@@ -129,6 +135,29 @@ export interface SearchResult {
     totalMatches?: number;
 }
 
+/**
+ * Extract OASF skills and domains from agent endpoints
+ * OASF data is stored in an endpoint with type 'OASF' in the meta field
+ */
+function extractOASFData(agent: any): { skills?: string[]; domains?: string[] } {
+    if (!agent.endpoints || !Array.isArray(agent.endpoints)) {
+        return {};
+    }
+
+    const oasfEndpoint = agent.endpoints.find(
+        (ep: any) => ep.type === 'OASF' || ep.type === 'oasf'
+    );
+
+    if (!oasfEndpoint || !oasfEndpoint.meta) {
+        return {};
+    }
+
+    return {
+        skills: Array.isArray(oasfEndpoint.meta.skills) ? oasfEndpoint.meta.skills : undefined,
+        domains: Array.isArray(oasfEndpoint.meta.domains) ? oasfEndpoint.meta.domains : undefined
+    };
+}
+
 // Count total agents matching filters (lightweight, returns only count)
 export async function countAgents(filters: SearchFilters): Promise<number> {
     cacheLoading.set(true);
@@ -149,6 +178,8 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
             name: filters.name,
             mcpTools: filters.mcpTools,
             a2aSkills: filters.a2aSkills,
+            oasfSkills: filters.oasfSkills,
+            oasfDomains: filters.oasfDomains,
             supportedTrust: filters.supportedTrust
         };
 
@@ -156,30 +187,37 @@ export async function countAgents(filters: SearchFilters): Promise<number> {
         delete sdkFilters.name;
         delete sdkFilters.mcpTools;
         delete sdkFilters.a2aSkills;
+        delete sdkFilters.oasfSkills;
+        delete sdkFilters.oasfDomains;
         delete sdkFilters.supportedTrust;
         delete sdkFilters.chains;
 
     // Helper to map SDK agent format to our AgentResult
-    const mapAgent = (agent: any): AgentResult => ({
-        id: agent.agentId,
-        name: agent.name,
-        description: agent.description,
-        imageUrl: agent.image,
-        mcp: agent.mcp,
-        a2a: agent.a2a,
-        mcpTools: agent.mcpTools,
-        a2aSkills: agent.a2aSkills,
-        mcpPrompts: agent.mcpPrompts,
-        mcpResources: agent.mcpResources,
-        active: agent.active,
-        x402support: agent.x402support,
-        supportedTrusts: agent.supportedTrusts,
-        owners: agent.owners,
-        operators: agent.operators,
-        chainId: agent.chainId,
-        walletAddress: agent.walletAddress,
-        extras: agent.extras
-    });
+    const mapAgent = (agent: any): AgentResult => {
+        const oasfData = extractOASFData(agent);
+        return {
+            id: agent.agentId,
+            name: agent.name,
+            description: agent.description,
+            imageUrl: agent.image,
+            mcp: agent.mcp,
+            a2a: agent.a2a,
+            mcpTools: agent.mcpTools,
+            a2aSkills: agent.a2aSkills,
+            mcpPrompts: agent.mcpPrompts,
+            mcpResources: agent.mcpResources,
+            oasfSkills: oasfData.skills,
+            oasfDomains: oasfData.domains,
+            active: agent.active,
+            x402support: agent.x402support,
+            supportedTrusts: agent.supportedTrusts,
+            owners: agent.owners,
+            operators: agent.operators,
+            chainId: agent.chainId,
+            walletAddress: agent.walletAddress,
+            extras: agent.extras
+        };
+    };
 
         // Multi-chain: count from all chains in parallel and cache all agents
         if (chainsToQuery.length > 1) {
@@ -289,6 +327,8 @@ async function searchAgentsMultiChain(
         name: filters.name,
         mcpTools: filters.mcpTools,
         a2aSkills: filters.a2aSkills,
+        oasfSkills: filters.oasfSkills,
+        oasfDomains: filters.oasfDomains,
         supportedTrust: filters.supportedTrust
     };
 
@@ -296,30 +336,37 @@ async function searchAgentsMultiChain(
     delete sdkFilters.name;
     delete sdkFilters.mcpTools;
     delete sdkFilters.a2aSkills;
+    delete sdkFilters.oasfSkills;
+    delete sdkFilters.oasfDomains;
     delete sdkFilters.supportedTrust;
     delete sdkFilters.chains;
 
     // Helper to map SDK agent format
-    const mapAgent = (agent: any): AgentResult => ({
-        id: agent.agentId,
-        name: agent.name,
-        description: agent.description,
-        imageUrl: agent.image,
-        mcp: agent.mcp,
-        a2a: agent.a2a,
-        mcpTools: agent.mcpTools,
-        a2aSkills: agent.a2aSkills,
-        mcpPrompts: agent.mcpPrompts,
-        mcpResources: agent.mcpResources,
-        active: agent.active,
-        x402support: agent.x402support,
-        supportedTrusts: agent.supportedTrusts,
-        owners: agent.owners,
-        operators: agent.operators,
-        chainId: agent.chainId,
-        walletAddress: agent.walletAddress,
-        extras: agent.extras
-    });
+    const mapAgent = (agent: any): AgentResult => {
+        const oasfData = extractOASFData(agent);
+        return {
+            id: agent.agentId,
+            name: agent.name,
+            description: agent.description,
+            imageUrl: agent.image,
+            mcp: agent.mcp,
+            a2a: agent.a2a,
+            mcpTools: agent.mcpTools,
+            a2aSkills: agent.a2aSkills,
+            mcpPrompts: agent.mcpPrompts,
+            mcpResources: agent.mcpResources,
+            oasfSkills: oasfData.skills,
+            oasfDomains: oasfData.domains,
+            active: agent.active,
+            x402support: agent.x402support,
+            supportedTrusts: agent.supportedTrusts,
+            owners: agent.owners,
+            operators: agent.operators,
+            chainId: agent.chainId,
+            walletAddress: agent.walletAddress,
+            extras: agent.extras
+        };
+    };
 
     // Calculate items to fetch per chain
     // When client-side filters are present (name, mcpTools, etc.), fetch MORE items from each chain
@@ -499,7 +546,7 @@ export async function searchAgents(
         }
     }
 
-    // IMPORTANT: Array filters (mcpTools, a2aSkills, supportedTrust) and name filter require special handling:
+    // IMPORTANT: Array filters (mcpTools, a2aSkills, oasfSkills, oasfDomains, supportedTrust) and name filter require special handling:
     // - The subgraph doesn't support name filtering at GraphQL query level
     // - SDK applies exact matching for array filters (e.g., "crypto" won't match "crypto-economic")
     // - SDK applies filters client-side but only on pageSize results
@@ -508,6 +555,8 @@ export async function searchAgents(
         name: filters.name,
         mcpTools: filters.mcpTools,
         a2aSkills: filters.a2aSkills,
+        oasfSkills: filters.oasfSkills,
+        oasfDomains: filters.oasfDomains,
         supportedTrust: filters.supportedTrust
     };
 
@@ -515,29 +564,36 @@ export async function searchAgents(
     delete sdkFilters.name;
     delete sdkFilters.mcpTools;
     delete sdkFilters.a2aSkills;
+    delete sdkFilters.oasfSkills;
+    delete sdkFilters.oasfDomains;
     delete sdkFilters.supportedTrust;
 
     // Helper function to map SDK agent to our AgentResult interface
-    const mapAgent = (agent: any): AgentResult => ({
-        id: agent.agentId,
-        name: agent.name,
-        description: agent.description,
-        imageUrl: agent.image,
-        mcp: agent.mcp,
-        a2a: agent.a2a,
-        mcpTools: agent.mcpTools,
-        a2aSkills: agent.a2aSkills,
-        mcpPrompts: agent.mcpPrompts,
-        mcpResources: agent.mcpResources,
-        active: agent.active,
-        x402support: agent.x402support,
-        supportedTrusts: agent.supportedTrusts,
-        owners: agent.owners,
-        operators: agent.operators,
-        chainId: agent.chainId,
-        walletAddress: agent.walletAddress,
-        extras: agent.extras
-    });
+    const mapAgent = (agent: any): AgentResult => {
+        const oasfData = extractOASFData(agent);
+        return {
+            id: agent.agentId,
+            name: agent.name,
+            description: agent.description,
+            imageUrl: agent.image,
+            mcp: agent.mcp,
+            a2a: agent.a2a,
+            mcpTools: agent.mcpTools,
+            a2aSkills: agent.a2aSkills,
+            mcpPrompts: agent.mcpPrompts,
+            mcpResources: agent.mcpResources,
+            oasfSkills: oasfData.skills,
+            oasfDomains: oasfData.domains,
+            active: agent.active,
+            x402support: agent.x402support,
+            supportedTrusts: agent.supportedTrusts,
+            owners: agent.owners,
+            operators: agent.operators,
+            chainId: agent.chainId,
+            walletAddress: agent.walletAddress,
+            extras: agent.extras
+        };
+    };
 
     // Determine if we need to fetch multiple pages for client-side filtering
     const needsMultiPageFetch = !cursor && hasClientSideFilters(clientFilters);

@@ -271,9 +271,37 @@ export const a2aSkillsMetadata: Record<string, CapabilityMetadata> = {
  */
 export function getCapabilityMetadata(
 	capability: string,
-	type: 'mcp' | 'a2a'
+	type: 'mcp' | 'a2a' | 'oasf-skill' | 'oasf-domain'
 ): CapabilityMetadata {
 	const normalizedName = capability.toLowerCase().trim();
+
+	// Handle OASF types with generic metadata
+	if (type === 'oasf-skill') {
+		// Extract category from skill path (e.g., "natural_language_processing/summarization" -> "natural_language_processing")
+		const category = capability.split('/')[0]?.replace(/_/g, ' ') || 'OASF Skill';
+		return {
+			name: capability.split('/').pop()?.replace(/_/g, ' ') || capability,
+			description: `OASF skill from the ${category} category`,
+			category: 'other',
+			icon: '🎯',
+			docUrl: 'https://github.com/agntcy/oasf/',
+			examples: [`Standardized skill from OASF taxonomy`]
+		};
+	}
+
+	if (type === 'oasf-domain') {
+		// Extract category from domain path (e.g., "finance_and_business/investment_services" -> "finance_and_business")
+		const category = capability.split('/')[0]?.replace(/_/g, ' ') || 'OASF Domain';
+		return {
+			name: capability.split('/').pop()?.replace(/_/g, ' ') || capability,
+			description: `OASF domain from the ${category} category`,
+			category: 'other',
+			icon: '🏢',
+			docUrl: 'https://github.com/agntcy/oasf/',
+			examples: [`Standardized domain from OASF taxonomy`]
+		};
+	}
+
 	const database = type === 'mcp' ? mcpToolsMetadata : a2aSkillsMetadata;
 
 	// Try exact match first

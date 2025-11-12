@@ -27,6 +27,22 @@ export function parseFiltersFromURL(searchParams: URLSearchParams): SearchFilter
 			.filter(Boolean);
 	}
 
+	const oasfSkills = searchParams.get('oasfSkills');
+	if (oasfSkills) {
+		filters.oasfSkills = oasfSkills
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	}
+
+	const oasfDomains = searchParams.get('oasfDomains');
+	if (oasfDomains) {
+		filters.oasfDomains = oasfDomains
+			.split(',')
+			.map((d) => d.trim())
+			.filter(Boolean);
+	}
+
 	const supportedTrust = searchParams.get('supportedTrust');
 	if (supportedTrust) {
 		filters.supportedTrust = supportedTrust
@@ -74,6 +90,12 @@ export function filtersToURLString(filters: SearchFilters): string {
 	}
 	if (filters.a2aSkills && filters.a2aSkills.length > 0) {
 		params.set('a2aSkills', filters.a2aSkills.join(','));
+	}
+	if (filters.oasfSkills && filters.oasfSkills.length > 0) {
+		params.set('oasfSkills', filters.oasfSkills.join(','));
+	}
+	if (filters.oasfDomains && filters.oasfDomains.length > 0) {
+		params.set('oasfDomains', filters.oasfDomains.join(','));
 	}
 	if (filters.supportedTrust && filters.supportedTrust.length > 0) {
 		params.set('supportedTrust', filters.supportedTrust.join(','));

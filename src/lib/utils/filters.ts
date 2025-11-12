@@ -68,6 +68,38 @@ export function matchesSupportedTrustFilter(
 }
 
 /**
+ * Check if agent has all specified OASF skills (partial matching)
+ */
+export function matchesOasfSkillsFilter(
+	agentSkills: string[] | undefined,
+	searchSkills: string[]
+): boolean {
+	if (!agentSkills || agentSkills.length === 0) return false;
+	if (!searchSkills || searchSkills.length === 0) return true;
+
+	return searchSkills.every((searchSkill) =>
+		agentSkills.some((agentSkill) => agentSkill.toLowerCase().includes(searchSkill.toLowerCase()))
+	);
+}
+
+/**
+ * Check if agent has all specified OASF domains (partial matching)
+ */
+export function matchesOasfDomainsFilter(
+	agentDomains: string[] | undefined,
+	searchDomains: string[]
+): boolean {
+	if (!agentDomains || agentDomains.length === 0) return false;
+	if (!searchDomains || searchDomains.length === 0) return true;
+
+	return searchDomains.every((searchDomain) =>
+		agentDomains.some((agentDomain) =>
+			agentDomain.toLowerCase().includes(searchDomain.toLowerCase())
+		)
+	);
+}
+
+/**
  * Check if agent matches all specified filters
  * Combines all filter checks with AND logic
  */
@@ -77,6 +109,8 @@ export function matchesAllFilters(
 		name?: string;
 		mcpTools?: string[];
 		a2aSkills?: string[];
+		oasfSkills?: string[];
+		oasfDomains?: string[];
 		supportedTrust?: string[];
 	}
 ): boolean {
@@ -99,6 +133,20 @@ export function matchesAllFilters(
 		}
 	}
 
+	// OASF Skills filter
+	if (filters.oasfSkills && filters.oasfSkills.length > 0) {
+		if (!matchesOasfSkillsFilter(agent.oasfSkills, filters.oasfSkills)) {
+			return false;
+		}
+	}
+
+	// OASF Domains filter
+	if (filters.oasfDomains && filters.oasfDomains.length > 0) {
+		if (!matchesOasfDomainsFilter(agent.oasfDomains, filters.oasfDomains)) {
+			return false;
+		}
+	}
+
 	// Supported Trust filter
 	if (filters.supportedTrust && filters.supportedTrust.length > 0) {
 		if (!matchesSupportedTrustFilter(agent.supportedTrusts, filters.supportedTrust)) {
@@ -117,12 +165,16 @@ export function hasClientSideFilters(filters: {
 	name?: string;
 	mcpTools?: string[];
 	a2aSkills?: string[];
+	oasfSkills?: string[];
+	oasfDomains?: string[];
 	supportedTrust?: string[];
 }): boolean {
 	return !!(
 		filters.name ||
 		(filters.mcpTools && filters.mcpTools.length > 0) ||
 		(filters.a2aSkills && filters.a2aSkills.length > 0) ||
+		(filters.oasfSkills && filters.oasfSkills.length > 0) ||
+		(filters.oasfDomains && filters.oasfDomains.length > 0) ||
 		(filters.supportedTrust && filters.supportedTrust.length > 0)
 	);
 }

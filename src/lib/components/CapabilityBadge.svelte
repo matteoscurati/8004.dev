@@ -6,7 +6,7 @@
 
 	interface Props {
 		capability: string;
-		type: 'mcp' | 'a2a';
+		type: 'mcp' | 'a2a' | 'oasf-skill' | 'oasf-domain';
 	}
 
 	let { capability, type }: Props = $props();

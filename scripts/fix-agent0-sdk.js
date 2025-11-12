@@ -31,12 +31,28 @@ function fixImportsInFile(filePath) {
         let content = readFileSync(filePath, 'utf8');
         const originalContent = content;
 
+        // Fix JSON imports: import x from './file.json.js' -> import x from './file.json' with { type: 'json' }
+        content = content.replace(
+            /import\s+(\w+)\s+from\s+['"]([^'"]+\.json)\.js['"]/g,
+            (match, varName, jsonPath) => {
+                return `import ${varName} from '${jsonPath}' with { type: 'json' }`;
+            }
+        );
+
+        // Fix JSON imports with assert -> with (for Node.js 22+)
+        content = content.replace(
+            /from\s+['"]([^'"]+\.json)['"]\s+assert\s+\{/g,
+            (match, jsonPath) => {
+                return `from '${jsonPath}' with {`;
+            }
+        );
+
         // Fix: export * from './path' -> export * from './path/index.js' or './path.js'
         content = content.replace(
             /from ['"](\.[^'"]+)['"]/g,
             (match, importPath) => {
-                // Skip if already has .js extension
-                if (importPath.endsWith('.js')) {
+                // Skip if already has .js extension or .json
+                if (importPath.endsWith('.js') || importPath.endsWith('.json')) {
                     return match;
                 }
 

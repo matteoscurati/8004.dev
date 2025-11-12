@@ -3,6 +3,8 @@ import {
 	matchesNameFilter,
 	matchesMcpToolsFilter,
 	matchesA2aSkillsFilter,
+	matchesOasfSkillsFilter,
+	matchesOasfDomainsFilter,
 	matchesSupportedTrustFilter,
 	matchesAllFilters,
 	hasClientSideFilters
@@ -29,6 +31,8 @@ function createMockAgent(overrides: Partial<AgentResult> = {}): AgentResult {
 		a2aSkills: [],
 		mcpPrompts: [],
 		mcpResources: [],
+		oasfSkills: [],
+		oasfDomains: [],
 		active: true,
 		x402support: false,
 		supportedTrusts: [],
@@ -138,6 +142,130 @@ describe('Filter Functions', () => {
 		});
 	});
 
+	describe('matchesOasfSkillsFilter', () => {
+		it('should match exact OASF skill', () => {
+			expect(
+				matchesOasfSkillsFilter(
+					['natural_language_processing/summarization'],
+					['natural_language_processing/summarization']
+				)
+			).toBe(true);
+		});
+
+		it('should match partial OASF skill', () => {
+			expect(
+				matchesOasfSkillsFilter(['natural_language_processing/summarization'], ['summarization'])
+			).toBe(true);
+			expect(
+				matchesOasfSkillsFilter(['natural_language_processing/summarization'], ['language_processing'])
+			).toBe(true);
+		});
+
+		it('should match case-insensitive', () => {
+			expect(
+				matchesOasfSkillsFilter(
+					['Natural_Language_Processing/Summarization'],
+					['natural_language_processing']
+				)
+			).toBe(true);
+		});
+
+		it('should match all specified skills (AND logic)', () => {
+			expect(
+				matchesOasfSkillsFilter(
+					['natural_language_processing/summarization', 'data_science/data_analysis'],
+					['summarization', 'data_analysis']
+				)
+			).toBe(true);
+		});
+
+		it('should not match if missing one skill', () => {
+			expect(
+				matchesOasfSkillsFilter(['natural_language_processing/summarization'], ['summarization', 'translation'])
+			).toBe(false);
+		});
+
+		it('should not match if no skills', () => {
+			expect(matchesOasfSkillsFilter([], ['summarization'])).toBe(false);
+			expect(matchesOasfSkillsFilter(undefined, ['summarization'])).toBe(false);
+		});
+
+		it('should match if no search terms', () => {
+			expect(matchesOasfSkillsFilter(['natural_language_processing/summarization'], [])).toBe(true);
+		});
+
+		it('should match category part of skill path', () => {
+			expect(
+				matchesOasfSkillsFilter(
+					['natural_language_processing/summarization'],
+					['natural_language']
+				)
+			).toBe(true);
+		});
+	});
+
+	describe('matchesOasfDomainsFilter', () => {
+		it('should match exact OASF domain', () => {
+			expect(
+				matchesOasfDomainsFilter(
+					['finance_and_business/investment_services'],
+					['finance_and_business/investment_services']
+				)
+			).toBe(true);
+		});
+
+		it('should match partial OASF domain', () => {
+			expect(
+				matchesOasfDomainsFilter(['finance_and_business/investment_services'], ['investment'])
+			).toBe(true);
+			expect(
+				matchesOasfDomainsFilter(['finance_and_business/investment_services'], ['finance'])
+			).toBe(true);
+		});
+
+		it('should match case-insensitive', () => {
+			expect(
+				matchesOasfDomainsFilter(
+					['Finance_And_Business/Investment_Services'],
+					['finance_and_business']
+				)
+			).toBe(true);
+		});
+
+		it('should match all specified domains (AND logic)', () => {
+			expect(
+				matchesOasfDomainsFilter(
+					['finance_and_business/investment_services', 'technology/software_development'],
+					['investment', 'software']
+				)
+			).toBe(true);
+		});
+
+		it('should not match if missing one domain', () => {
+			expect(
+				matchesOasfDomainsFilter(['finance_and_business/investment_services'], ['investment', 'healthcare'])
+			).toBe(false);
+		});
+
+		it('should not match if no domains', () => {
+			expect(matchesOasfDomainsFilter([], ['investment'])).toBe(false);
+			expect(matchesOasfDomainsFilter(undefined, ['investment'])).toBe(false);
+		});
+
+		it('should match if no search terms', () => {
+			expect(matchesOasfDomainsFilter(['finance_and_business/investment_services'], [])).toBe(true);
+		});
+
+		it('should match category part of domain path', () => {
+			expect(
+				matchesOasfDomainsFilter(
+					['finance_and_business/investment_services'],
+					['finance_and']
+				)
+			).toBe(true);
+		});
+	});
+
 	describe('matchesSupportedTrustFilter', () => {
 		it('should match exact trust model', () => {
 			expect(matchesSupportedTrustFilter(['reputation'], ['reputation'])).toBe(true);
@@ -195,11 +323,27 @@ describe('Filter Functions', () => {
 			expect(matchesAllFilters(agent, { supportedTrust: ['crypto'] })).toBe(true);
 		});
 
+		it('should match agent with OASF skills filter', () => {
+			const agent = createMockAgent({
+				oasfSkills: ['natural_language_processing/summarization']
+			});
+			expect(matchesAllFilters(agent, { oasfSkills: ['summarization'] })).toBe(true);
+		});
+
+		it('should match agent with OASF domains filter', () => {
+			const agent = createMockAgent({
+				oasfDomains: ['finance_and_business/investment_services']
+			});
+			expect(matchesAllFilters(agent, { oasfDomains: ['investment'] })).toBe(true);
+		});
+
 		it('should match agent with combined filters (AND logic)', () => {
 			const agent = createMockAgent({
 				name: 'Agente Ciro',
 				mcpTools: ['github'],
 				a2aSkills: ['data-analysis'],
+				oasfSkills: ['natural_language_processing/summarization'],
+				oasfDomains: ['finance_and_business/investment_services'],
 				supportedTrusts: ['crypto-economic']
 			});
 			expect(
@@ -207,6 +351,8 @@ describe('Filter Functions', () => {
 					name: 'ciro',
 					mcpTools: ['git'],
 					a2aSkills: ['data'],
+					oasfSkills: ['summarization'],
+					oasfDomains: ['investment'],
 					supportedTrust: ['crypto']
 				})
 			).toBe(true);
@@ -259,6 +405,14 @@ describe('Filter Functions', () => {
 			expect(hasClientSideFilters({ supportedTrust: ['crypto'] })).toBe(true);
 		});
 
+		it('should return true if oasfSkills filter present', () => {
+			expect(hasClientSideFilters({ oasfSkills: ['summarization'] })).toBe(true);
+		});
+
+		it('should return true if oasfDomains filter present', () => {
+			expect(hasClientSideFilters({ oasfDomains: ['investment'] })).toBe(true);
+		});
+
 		it('should return true if multiple filters present', () => {
 			expect(
 				hasClientSideFilters({
@@ -278,6 +432,8 @@ describe('Filter Functions', () => {
 				hasClientSideFilters({
 					mcpTools: [],
 					a2aSkills: [],
+					oasfSkills: [],
+					oasfDomains: [],
 					supportedTrust: []
 				})
 			).toBe(false);

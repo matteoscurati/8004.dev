@@ -12,6 +12,8 @@
 	let name = $state('');
 	let mcpToolsInput = $state('');
 	let a2aSkillsInput = $state('');
+	let oasfSkillsInput = $state('');
+	let oasfDomainsInput = $state('');
 	let supportedTrustInput = $state('');
 	let ownersInput = $state('');
 	let operatorsInput = $state('');
@@ -26,6 +28,8 @@
 		if (initialFilters.name) name = initialFilters.name;
 		if (initialFilters.mcpTools) mcpToolsInput = initialFilters.mcpTools.join(', ');
 		if (initialFilters.a2aSkills) a2aSkillsInput = initialFilters.a2aSkills.join(', ');
+		if (initialFilters.oasfSkills) oasfSkillsInput = initialFilters.oasfSkills.join(', ');
+		if (initialFilters.oasfDomains) oasfDomainsInput = initialFilters.oasfDomains.join(', ');
 		if (initialFilters.supportedTrust) supportedTrustInput = initialFilters.supportedTrust.join(', ');
 		if (initialFilters.owners) ownersInput = initialFilters.owners.join(', ');
 		if (initialFilters.operators) operatorsInput = initialFilters.operators.join(', ');
@@ -38,6 +42,8 @@
 		if (
 			initialFilters.mcpTools?.length ||
 			initialFilters.a2aSkills?.length ||
+			initialFilters.oasfSkills?.length ||
+			initialFilters.oasfDomains?.length ||
 			initialFilters.supportedTrust?.length ||
 			initialFilters.owners?.length ||
 			initialFilters.operators?.length ||
@@ -59,6 +65,12 @@
 		}
 		if (a2aSkillsInput.trim()) {
 			filters.a2aSkills = a2aSkillsInput.split(',').map((s) => s.trim()).filter(Boolean);
+		}
+		if (oasfSkillsInput.trim()) {
+			filters.oasfSkills = oasfSkillsInput.split(',').map((s) => s.trim()).filter(Boolean);
+		}
+		if (oasfDomainsInput.trim()) {
+			filters.oasfDomains = oasfDomainsInput.split(',').map((d) => d.trim()).filter(Boolean);
 		}
 		if (supportedTrustInput.trim()) {
 			filters.supportedTrust = supportedTrustInput.split(',').map((t) => t.trim()).filter(Boolean);
@@ -89,6 +101,8 @@
 		return (
 			mcpToolsInput.trim() !== '' ||
 			a2aSkillsInput.trim() !== '' ||
+			oasfSkillsInput.trim() !== '' ||
+			oasfDomainsInput.trim() !== '' ||
 			supportedTrustInput.trim() !== '' ||
 			ownersInput.trim() !== '' ||
 			operatorsInput.trim() !== '' ||
@@ -103,6 +117,8 @@
 		name = '';
 		mcpToolsInput = '';
 		a2aSkillsInput = '';
+		oasfSkillsInput = '';
+		oasfDomainsInput = '';
 		supportedTrustInput = '';
 		ownersInput = '';
 		operatorsInput = '';
@@ -173,6 +189,32 @@
 				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
 			/>
 			<span class="help-text">Comma-separated. Examples: python, code-generation, data-analysis</span>
+		</div>
+
+		<div class="filter-group">
+			<label for="oasfSkills">OASF Skills:</label>
+			<input
+				id="oasfSkills"
+				type="text"
+				class="pixel-input"
+				bind:value={oasfSkillsInput}
+				placeholder="e.g. natural_language_processing/summarization..."
+				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+			<span class="help-text">Comma-separated. OASF taxonomy skills (136 available)</span>
+		</div>
+
+		<div class="filter-group">
+			<label for="oasfDomains">OASF Domains:</label>
+			<input
+				id="oasfDomains"
+				type="text"
+				class="pixel-input"
+				bind:value={oasfDomainsInput}
+				placeholder="e.g. finance_and_business/investment_services..."
+				onkeypress={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+			<span class="help-text">Comma-separated. OASF taxonomy domains (204 available)</span>
 		</div>
 
 		<div class="filter-group">

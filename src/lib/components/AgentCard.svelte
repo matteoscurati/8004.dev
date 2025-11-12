@@ -127,6 +127,28 @@
 				</div>
 			</div>
 		{/if}
+
+		{#if agent.oasfSkills && agent.oasfSkills.length > 0}
+			<div class="capability-section">
+				<h4>OASF Skills:</h4>
+				<div class="tags">
+					{#each agent.oasfSkills as skill}
+						<CapabilityBadge capability={skill} type="oasf-skill" />
+					{/each}
+				</div>
+			</div>
+		{/if}
+
+		{#if agent.oasfDomains && agent.oasfDomains.length > 0}
+			<div class="capability-section">
+				<h4>OASF Domains:</h4>
+				<div class="tags">
+					{#each agent.oasfDomains as domain}
+						<CapabilityBadge capability={domain} type="oasf-domain" />
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<div class="agent-status">
